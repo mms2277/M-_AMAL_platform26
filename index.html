@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة ميس أمل للبرمجة والذكاء الاصطناعي 💻🤖</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #8b3a3a; /* لون طوبي دافئ وفاخر */
+            --secondary: #b35454; /* درجة طوبية أفتح للأزرار والتحديد */
+            --accent: #d9534f;
+            --pending: #f59e0b;
+            --success: #10b981;
+            --bg: #fdf8f8;
+            --card-bg: #ffffff;
+            --text: #1f1111;
+        }
+
+        body {
+            -webkit-user-select: none;
+            user-select: none;
+            background: linear-gradient(135deg, #4a1c1c 0%, #702b2b 50%, #8b3a3a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+        }
+
+        * { box-sizing: border-box; }
+
+        .app-container { 
+            background: var(--card-bg); 
+            width: 100%; 
+            max-width: 950px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3); 
+            overflow: hidden; 
+            position: relative; 
+        }
+        
+        header { 
+            background: linear-gradient(45deg, #5c2222, #8b3a3a); 
+            color: white; 
+            padding: 20px 15px; 
+            text-align: center; 
+            position: relative; 
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; 
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .teacher-badge { 
+            background: rgba(255,255,255,0.15); 
+            padding: 6px 16px; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            cursor: pointer; 
+            color: white; 
+            border: 1px solid rgba(255,255,255,0.3); 
+            font-weight: bold; 
+            display: inline-block;
+        }
+        
+        .header-brand-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 4px;
+        }
+
+        header h1 { font-size: 22px; margin: 0; color: white; font-weight: bold; }
+        header p { font-size: 12px; opacity: 0.9; margin: 0; }
+
+        .menu-toggle-btn {
+            position: absolute;
+            right: 15px;
+            top: 18px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            font-size: 18px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .sidebar-drawer {
+            position: fixed;
+            top: 0;
+            right: -290px;
+            width: 270px;
+            height: 100%;
+            background: #4a1c1c;
+            color: white;
+            z-index: 10001;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.4);
+            transition: right 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 15px;
+        }
+        .sidebar-drawer.open { right: 0 !important; }
+
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+        .drawer-header h3 { margin: 0; font-size: 16px; color: #f2c4c4; }
+        .close-drawer-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+
+        .drawer-menu { display: flex; flex-direction: column; gap: 10px; }
+        .drawer-menu button {
+            background: rgba(255, 255, 255, 0.08);
+            color: #f8fafc;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 10px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .drawer-menu button:hover, .drawer-menu button.active {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            display: none;
+        }
+        .drawer-overlay.active { display: block !important; }
+
+        .content-area { padding: 20px; overflow-y: auto; min-height: 480px; }
+
+        .screen { display: none; position: relative; }
+        .screen.active { display: block !important; }
+
+        .form-group { margin-bottom: 15px; text-align: right; }
+        label { display: block; font-weight: bold; margin-bottom: 6px; color: #334155; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 11px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; }
+        
+        .btn { width: 100%; padding: 12px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-success { background: linear-gradient(45deg, #059669, #10b981); }
+        .btn-danger { background: linear-gradient(45deg, #dc2626, #ef4444); }
+        .btn-warning { background: linear-gradient(45deg, #d97706, #f59e0b); }
+        .btn-secondary { background: linear-gradient(45deg, #475569, #64748b); }
+        .btn-excel { background: linear-gradient(45deg, #15803d, #16a34a); }
+
+        .exam-card { background: #fdf8f8; border: 1px solid #f3e5e5; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .timer { font-size: 16px; font-weight: bold; color: var(--accent); background: #fef2f2; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; border: 1px solid #fecaca; }
+
+        .option-btn { background: white; border: 2px solid #cbd5e1; text-align: right; margin: 8px 0; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 14px; }
+        .option-btn.selected { background: var(--secondary); color: white; border-color: var(--secondary); }
+
+        .user-bar { background: #fff5f5; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0d5d5; font-size: 13px; font-weight: bold; color: var(--primary); }
+        .badge-pending { background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 6px; font-size: 12px; }
+        .notification-badge { background: red; color: white; border-radius: 50%; padding: 2px 7px; font-size: 12px; margin-right: 5px; }
+
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; color: white; text-align: center; flex-direction: column; }
+        .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--secondary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { padding: 10px; border: 1px solid #cbd5e1; text-align: center; }
+        th { background: var(--primary); color: white; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: #fdf8f8; border: 1px solid #f3e5e5; padding: 15px; border-radius: 12px; text-align: center; }
+        .stat-card h4 { margin: 0; font-size: 20px; color: var(--secondary); }
+        .stat-card p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; }
+
+        .watermark-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.06;
+            font-size: 18px;
+            color: #000;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-content: space-around;
+            z-index: 5;
+            overflow: hidden;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <h3>جاري حفظ البيانات وتحديث القاعدة...</h3>
+</div>
+
+<div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
+<div id="sidebarDrawer" class="sidebar-drawer">
+    <div class="drawer-header">
+        <h3><i class="fas fa-compass"></i> القائمة الرئيسية</h3>
+        <button class="close-drawer-btn" onclick="toggleDrawer()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="drawer-menu">
+        <button id="navProfile" class="active" onclick="switchTab('profileTab')"><i class="fas fa-id-card"></i> ملفي الشخصي</button>
+        <button id="navExams" onclick="switchTab('examsTab')"><i class="fas fa-file-alt"></i> الامتحانات المتاحة</button>
+        <button id="navResults" onclick="switchTab('resultsTab')"><i class="fas fa-chart-line"></i> نتائجي والمراجعة</button>
+    </div>
+</div>
+
+<div class="app-container">
+    <header>
+        <button id="menuToggleBtn" class="menu-toggle-btn" onclick="toggleDrawer()" style="display: none;"><i class="fas fa-bars"></i></button>
+        <button id="teacherBtn" class="teacher-badge" onclick="openTeacherLogin()"><i class="fas fa-user-shield"></i> لوحة المعلم</button>
+
+        <div class="header-brand-info">
+            <br> <h1><i class="fas fa-laptop-code"></i> منصة ميس أمل 👩🏻‍💻</h1>
+            <p>المنصة التعليمية للبرمجة والذكاء الاصطناعي 💻🤖</p>
+        </div>
+    </header>
+
+    <div id="userBar" class="user-bar" style="display: none;">
+        <span id="userNameDisplay"></span>
+        <span id="userGradeDisplay"></span>
+        <button onclick="logout()" style="background:none; border:none; color:red; cursor:pointer; font-weight:bold;">خروج <i class="fas fa-sign-out-alt"></i></button>
+    </div>
+
+    <div class="content-area">
+        <!-- تسجيل دخول الطالب -->
+        <div id="loginScreen" class="screen active">
+            <h2 style="text-align: center; margin-bottom: 20px; color: var(--primary);">مرحباً بك في منصة البرمجة والذكاء الاصطناعي! 👋</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>اسم الطالب ثلاثي أو رباعي:</label>
+                    <input type="text" id="inputName" placeholder="أدخل اسمك..." required>
+                </div>
+                <div class="form-group">
+                    <label>الصف الدراسي:</label>
+                    <select id="inputGrade" required>
+                        <option value="" disabled selected>اختر صفك الدراسي...</option>
+                        <option value="الأول الثانوي">الصف الأول الثانوي</option>
+                        <option value="الثاني الثانوي">الصف الثاني الثانوي</option>
+                        <option value="الثالث الثانوي">الصف الثالث الثانوي</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">دخول المنصة 🚀</button>
+            </form>
+        </div>
+
+        <!-- دخول المدرس -->
+        <div id="passModal" class="screen">
+            <h3 style="margin-bottom:15px; color:var(--primary);">دخول لوحة التحكم</h3>
+            <div class="form-group">
+                <input type="password" id="teacherPassInput" placeholder="كلمة المرور...">
+            </div>
+            <button class="btn btn-success" onclick="verifyTeacherPassword()">دخول</button>
+            <button class="btn btn-danger" style="margin-top:8px;" onclick="cancelTeacherLogin()">إلغاء</button>
+        </div>
+
+        <!-- لوحة المدرس -->
+        <div id="teacherScreen" class="screen">
+            <h3 style="color: var(--primary); margin-bottom: 15px;"><i class="fas fa-tools"></i> لوحة التحكم المباشرة</h3>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+                <button class="btn" style="flex: 1; min-width: 120px;" onclick="toggleTeacherView('addExam')">➕ إضافة امتحان</button>
+                <button class="btn btn-success" style="flex: 1; min-width: 120px;" onclick="toggleTeacherView('viewResults')">📊 النتائج الشاملة</button>
+                <button class="btn btn-warning" style="flex: 1; min-width: 120px;" onclick="toggleTeacherView('viewPending')">
+                    📝 تصحيح المقالي <span id="pendingBadge" class="notification-badge" style="display:none;">0</span>
+                </button>
+                <button class="btn" style="background:#0284c7; flex: 1; min-width: 120px;" onclick="toggleTeacherView('trackAttendance')">👥 الحضور والغياب</button>
+                <button class="btn btn-danger" style="flex: 1; min-width: 120px;" onclick="toggleTeacherView('manageExams')">🗑️ إدارة الامتحانات</button>
+            </div>
+
+            <!-- إضافة امتحان جديد -->
+            <form id="addExamForm" onsubmit="createNewExam(event)" style="display: none;">
+                <div class="form-group">
+                    <label>عنوان الامتحان:</label>
+                    <input type="text" id="newExamTitle" placeholder="عنوان الامتحان..." required>
+                </div>
+                <div class="form-group">
+                    <label>الصف الدراسي المستهدف:</label>
+                    <select id="newExamGrade" required>
+                        <option value="جميع الصفوف">جميع الصفوف الدراسية</option>
+                        <option value="الأول الثانوي">الصف الأول الثانوي</option>
+                        <option value="الثاني الثانوي">الصف الثاني الثانوي</option>
+                        <option value="الثالث الثانوي">الصف الثالث الثانوي</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>مدة الامتحان (بالدقائق):</label>
+                    <input type="number" id="newExamDuration" value="10" min="1" required>
+                </div>
+
+                <hr style="margin: 15px 0;">
+                <div id="questionsBuilder"></div>
+                <div style="display: flex; gap: 8px; margin: 10px 0;">
+                    <button type="button" class="btn" style="background:#d97706;" onclick="addQuestionField('MCQ')">+ سؤال اختياري</button>
+                    <button type="button" class="btn" style="background:#7c3aed;" onclick="addQuestionField('ESSAY')">+ سؤال مقالي</button>
+                </div>
+                <button type="submit" class="btn btn-success">نشر الامتحان فوراً 📢</button>
+            </form>
+
+            <!-- جدول نتائج الطلاب -->
+            <div id="teacherResultsSection" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label><i class="fas fa-filter"></i> فلترة حسب الصف الدراسي:</label>
+                        <select id="filterGradeSelect" onchange="renderTeacherResultsTable()">
+                            <option value="ALL">جميع الصفوف الدراسية</option>
+                            <option value="الأول الثانوي">الصف الأول الثانوي</option>
+                            <option value="الثاني الثانوي">الصف الثاني الثانوي</option>
+                            <option value="الثالث الثانوي">الصف الثالث الثانوي</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-excel" style="width: auto; height: 42px; margin-top: 20px;" onclick="exportResultsToExcel()">
+                        <i class="fas fa-file-excel"></i> تصدير لـ Excel
+                    </button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الطالب</th>
+                                <th>الصف</th>
+                                <th>الامتحان</th>
+                                <th>الدرجة</th>
+                                <th>وقت التسليم</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsResultsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- لوحة الحضور والغياب -->
+            <div id="teacherAttendanceSection" style="display: none;">
+                <h4 style="margin-bottom: 10px; color: var(--primary);"><i class="fas fa-user-check"></i> متابعة الحضور والغياب للامتحانات:</h4>
+                <div class="form-group">
+                    <label>اختر الامتحان لمتابعة الطلاب:</label>
+                    <select id="attendanceExamSelect" onchange="renderAttendanceTracker()">
+                        <option value="" disabled selected>اختر الامتحان...</option>
+                    </select>
+                </div>
+
+                <div id="attendanceContainer" style="display:none; margin-top:15px;">
+                    <h5 style="color:#10b981; margin-bottom:5px;">✅ الطلاب الذين حضروا وأدوا الامتحان:</h5>
+                    <div style="overflow-x: auto; margin-bottom:20px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>اسم الطالب</th>
+                                    <th>الصف</th>
+                                    <th>الدرجة</th>
+                                    <th>تاريخ ووقت الأداء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendedStudentsTable"></tbody>
+                        </table>
+                    </div>
+
+                    <h5 style="color:#ef4444; margin-bottom:5px;">❌ الطلاب الغائبون عن الامتحان:</h5>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>اسم الطالب</th>
+                                    <th>الصف</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="absentStudentsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- التصحيح المقالي -->
+            <div id="teacherPendingSection" style="display: none;">
+                <h4 style="margin-bottom: 10px; color: var(--primary);">قائمة الامتحانات بانتظار تصحيح الأسئلة المقالية:</h4>
+                <div id="pendingList"></div>
+            </div>
+
+            <!-- إدارة الامتحانات -->
+            <div id="teacherManageExamsSection" style="display: none;">
+                <h4 style="margin-bottom: 10px; color: var(--primary);">الامتحانات المنشورة حالياً:</h4>
+                <div id="manageExamsList"></div>
+            </div>
+
+            <button class="btn btn-danger" style="margin-top: 15px;" onclick="closeTeacherPanel()">إغلاق اللوحة</button>
+        </div>
+
+        <!-- الملف الشخصي للطالب -->
+        <div id="profileTab" class="screen">
+            <h3 style="margin-bottom: 15px; color: var(--primary);"><i class="fas fa-id-card"></i> الملف الشخصي للطالب</h3>
+            <div class="stat-card" style="text-align: right; margin-bottom: 15px;">
+                <h3 id="profStudentName" style="margin:0; color:var(--primary);">...</h3>
+                <p id="profStudentGrade" style="font-size:14px; color:#555; margin-top:5px;">...</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4 id="statExamsTaken">0</h4>
+                    <p>امتحانات مكتملة</p>
+                </div>
+                <div class="stat-card">
+                    <h4 id="statAvgScore">0%</h4>
+                    <p>متوسط الدرجات</p>
+                </div>
+            </div>
+
+            <h4 style="color:var(--primary); margin-bottom:10px;">سجل الحضور والامتحانات:</h4>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الامتحان</th>
+                            <th>التاريخ</th>
+                            <th>الدرجة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentProfileHistoryTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- امتحانات الطالب -->
+        <div id="examsTab" class="screen">
+            <h3 style="margin-bottom: 15px; color: var(--primary);"><i class="fas fa-list-check"></i> الامتحانات المتاحة لصفك:</h3>
+            <div id="examsList"></div>
+        </div>
+
+        <!-- نتائج الطالب -->
+        <div id="resultsTab" class="screen">
+            <h3 style="margin-bottom: 15px; color: var(--primary);"><i class="fas fa-trophy"></i> نتائجي والمراجعة:</h3>
+            <div id="resultsList"></div>
+        </div>
+
+        <!-- شاشة الامتحان -->
+        <div id="quizScreen" class="screen">
+            <div class="watermark-container" id="watermarkBox"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span id="progressText" style="font-size: 13px; font-weight: bold; color: var(--primary);">0%</span>
+                <div class="timer" id="timerDisplay" style="margin-bottom:0; padding:6px 12px;">الوقت المتبقي: 00:00</div>
+            </div>
+
+            <h3 id="qTitle" style="margin-bottom: 15px;">السؤال...</h3>
+            <div id="optionsContainer"></div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="prevBtn" class="btn btn-secondary" onclick="prevQuestion()" style="display: none;">➡️ السؤال السابق</button>
+                <button id="nextBtn" class="btn" onclick="nextQuestion()">السؤال التالي ⬅️</button>
+            </div>
+        </div>
+
+        <!-- شاشة ورقة الطالب للمعلم -->
+        <div id="teacherReviewModal" class="screen">
+            <h3 id="reviewStudentTitle" style="color: var(--primary); margin-bottom: 15px;"></h3>
+            <div id="reviewStudentBody"></div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="goBackToResults()">العودة للجدول ↩️</button>
+                <button type="button" class="btn btn-danger" style="flex: 1;" onclick="goToAddExamScreen()">العودة لوحة إضافة امتحان ➕</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const FIREBASE_URL = "https://mrs-amal-platform-default-rtdb.firebaseio.com/";
+
+    let currentUser = null;
+    let examsData = [];
+    let userResults = [];
+    let allStudents = [];
+    
+    let currentExam = null;
+    let currentQIndex = 0;
+    let userAnswers = [];
+    let examTimer = null;
+    let timeLeftSeconds = 0;
+    let qCounter = 0;
+    let tabSwitchCount = 0;
+
+    async function apiFetch(endpoint, method = 'GET', data = null) {
+        try {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (data) options.body = JSON.stringify(data);
+            const res = await fetch(`${FIREBASE_URL}${endpoint}.json`, options);
+            return await res.json();
+        } catch(e) {
+            console.error("API Error", e);
+            return null;
+        }
+    }
+
+    async function syncData() {
+        const examsRes = await apiFetch('exams');
+        examsData = [];
+        if(examsRes) {
+            Object.keys(examsRes).forEach(k => examsData.push({ ...examsRes[k], firebaseKey: k }));
+        }
+
+        const resultsRes = await apiFetch('results');
+        userResults = [];
+        if(resultsRes) {
+            Object.keys(resultsRes).forEach(k => userResults.push({ ...resultsRes[k], firebaseKey: k }));
+        }
+
+        const studentsRes = await apiFetch('students');
+        allStudents = [];
+        if(studentsRes) {
+            Object.keys(studentsRes).forEach(k => allStudents.push(studentsRes[k]));
+        }
+
+        updatePendingBadge();
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden && document.getElementById('quizScreen').classList.contains('active')) {
+            tabSwitchCount++;
+            if (tabSwitchCount === 1) {
+                alert("⚠️ تحذير أمني: يمنع مغادرة تبويب الامتحان أو تصغير الصفحة!");
+            } else if (tabSwitchCount >= 2) {
+                alert("🚨 تم كشف خروجك من الصفحة لمرة ثانية! تم تسليم الامتحان تلقائياً بسب محاولة الغش.");
+                finishExam(true);
+            }
+        }
+    });
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(id);
+        if(target) target.classList.add('active');
+
+        const teacherBtn = document.getElementById('teacherBtn');
+        const menuToggleBtn = document.getElementById('menuToggleBtn');
+
+        if(id === 'loginScreen') {
+            teacherBtn.style.display = 'inline-block';
+            menuToggleBtn.style.display = 'none';
+            document.getElementById('userBar').style.display = 'none';
+        } else if(id === 'passModal' || id === 'teacherScreen') {
+            teacherBtn.style.display = 'none';
+            menuToggleBtn.style.display = 'none';
+            document.getElementById('userBar').style.display = 'none';
+        } else {
+            teacherBtn.style.display = 'none';
+            menuToggleBtn.style.display = 'block';
+            document.getElementById('userBar').style.display = 'flex';
+        }
+    }
+
+    function toggleDrawer() {
+        document.getElementById('sidebarDrawer').classList.toggle('open');
+        document.getElementById('drawerOverlay').classList.toggle('active');
+    }
+
+    function openTeacherLogin() { showScreen('passModal'); }
+    function cancelTeacherLogin() { currentUser ? setupLoggedInUser() : showScreen('loginScreen'); }
+
+    function verifyTeacherPassword() {
+        const p = document.getElementById('teacherPassInput').value;
+        if(p === "AMAL2026") {
+            document.getElementById('teacherPassInput').value = "";
+            showScreen('teacherScreen');
+            toggleTeacherView('addExam');
+        } else {
+            alert("كلمة المرور غير صحيحة!");
+        }
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        const name = document.getElementById('inputName').value.trim();
+        const grade = document.getElementById('inputGrade').value;
+
+        if (name && grade) {
+            currentUser = { name, grade };
+            localStorage.setItem('miss_amal_user', JSON.stringify(currentUser));
+            
+            const studentId = btoa(unescape(encodeURIComponent(name.toLowerCase())));
+            await apiFetch(`students/${studentId}`, 'PUT', { name, grade });
+
+            setupLoggedInUser();
+        }
+    }
+
+    function setupLoggedInUser() {
+        document.getElementById('userNameDisplay').innerText = `👤 ${currentUser.name}`;
+        document.getElementById('userGradeDisplay').innerText = `📚 ${currentUser.grade}`;
+        switchTab('profileTab');
+    }
+
+    function logout() {
+        if(confirm("تأكيد الخروج؟")) {
+            localStorage.removeItem('miss_amal_user');
+            currentUser = null;
+            showScreen('loginScreen');
+        }
+    }
+
+    async function switchTab(tabId) {
+        showScreen(tabId);
+        document.querySelectorAll('.drawer-menu button').forEach(b => b.classList.remove('active'));
+        if(document.getElementById('sidebarDrawer').classList.contains('open')) toggleDrawer();
+
+        await syncData();
+
+        if(tabId === 'examsTab') {
+            document.getElementById('navExams').classList.add('active');
+            renderExams();
+        } else if(tabId === 'resultsTab') {
+            document.getElementById('navResults').classList.add('active');
+            renderStudentResults();
+        } else if(tabId === 'profileTab') {
+            document.getElementById('navProfile').classList.add('active');
+            renderStudentProfile();
+        }
+    }
+
+    function renderStudentProfile() {
+        document.getElementById('profStudentName').innerText = `👤 ${currentUser.name}`;
+        document.getElementById('profStudentGrade').innerText = `📚 ${currentUser.grade}`;
+
+        const myResults = userResults.filter(r => r.studentName === currentUser.name);
+        document.getElementById('statExamsTaken').innerText = myResults.length;
+
+        let totalPercent = 0, count = 0;
+        const tbody = document.getElementById('studentProfileHistoryTable');
+        tbody.innerHTML = "";
+
+        if (myResults.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='3'>لا يوجد امتحانات مسجلة.</td></tr>";
+            document.getElementById('statAvgScore').innerText = "0%";
+            return;
+        }
+
+        myResults.forEach(r => {
+            const score = r.autoScore + (r.essayScore || 0);
+            if (r.status === 'GRADED') {
+                totalPercent += (score / r.totalPossible) * 100;
+                count++;
+            }
+            tbody.innerHTML += `<tr><td>${r.examTitle}</td><td>${r.submittedAt}</td><td>${r.status === 'PENDING' ? 'معلق' : `${score}/${r.totalPossible}`}</td></tr>`;
+        });
+
+        document.getElementById('statAvgScore').innerText = `${count > 0 ? Math.round(totalPercent / count) : 0}%`;
+    }
+
+    function renderExams() {
+        const container = document.getElementById('examsList');
+        container.innerHTML = "";
+        const list = examsData.filter(e => e.grade === currentUser.grade || e.grade === 'جميع الصفوف');
+
+        if (list.length === 0) {
+            container.innerHTML = "<p style='text-align:center;'>لا توجد امتحانات مخصصة لصفك حالياً.</p>";
+            return;
+        }
+
+        list.forEach(exam => {
+            const taken = userResults.some(r => r.examId === exam.id && r.studentName === currentUser.name);
+            const qCount = exam.questions ? exam.questions.length : 0;
+            container.innerHTML += `
+                <div class="exam-card">
+                    <div>
+                        <h4 style="color:var(--primary); margin:0 0 6px 0;">${exam.title}</h4>
+                        <p style="font-size:13px; color:#64748b; margin:0;">
+                            <b>عدد الأسئلة:</b> ${qCount} أسئلة | <b>الوقت:</b> ${exam.duration} دقائق
+                        </p>
+                    </div>
+                    ${taken ? `<button class="btn" style="background:#888; width:auto;" disabled>تم التقديم</button>` : `<button class="btn btn-success" style="width:auto;" onclick="startExam('${exam.firebaseKey}')">ابدأ 🚀</button>`}
+                </div>
+            `;
+        });
+    }
+
+    function startExam(key) {
+        currentExam = examsData.find(e => e.firebaseKey === key);
+        currentQIndex = 0;
+        tabSwitchCount = 0;
+        userAnswers = new Array(currentExam.questions.length).fill("");
+        timeLeftSeconds = currentExam.duration * 60;
+
+        const watermarkBox = document.getElementById('watermarkBox');
+        watermarkBox.innerHTML = Array(20).fill(`<span>${currentUser.name} - ${currentUser.grade}</span>`).join('');
+
+        showScreen('quizScreen');
+        startTimer();
+        renderQuestion();
+    }
+
+    function startTimer() {
+        clearInterval(examTimer);
+        examTimer = setInterval(() => {
+            let m = Math.floor(timeLeftSeconds / 60);
+            let s = timeLeftSeconds % 60;
+            document.getElementById('timerDisplay').innerText = `الوقت: ${m}:${s < 10 ? '0'+s : s}`;
+            if (timeLeftSeconds <= 0) {
+                clearInterval(examTimer);
+                finishExam(true);
+            }
+            timeLeftSeconds--;
+        }, 1000);
+    }
+
+    function renderQuestion() {
+        const q = currentExam.questions[currentQIndex];
+        document.getElementById('qTitle').innerText = `سُؤال (${currentQIndex + 1} من ${currentExam.questions.length}) [${q.points} درجة]: ${q.text}`;
+        
+        const container = document.getElementById('optionsContainer');
+        container.innerHTML = "";
+
+        const labels = ['أ', 'ب', 'ج', 'د'];
+
+        if (q.type === 'MCQ') {
+            q.options.forEach((opt, idx) => {
+                const label = labels[idx] || (idx + 1);
+                container.innerHTML += `<button class="option-btn ${userAnswers[currentQIndex] === idx ? 'selected' : ''}" onclick="selectOpt(${idx})"><b>(${label})</b> ${opt}</button>`;
+            });
+        } else {
+            container.innerHTML = `<textarea rows="5" oninput="userAnswers[currentQIndex]=this.value" placeholder="اكتب إجابتك هنا...">${userAnswers[currentQIndex] || ''}</textarea>`;
+        }
+
+        document.getElementById('prevBtn').style.display = currentQIndex > 0 ? 'block' : 'none';
+        const nextBtn = document.getElementById('nextBtn');
+        if (currentQIndex === currentExam.questions.length - 1) {
+            nextBtn.innerText = "تسليم الامتحان 🏁";
+            nextBtn.onclick = () => finishExam(false);
+        } else {
+            nextBtn.innerText = "التالي ⬅️";
+            nextBtn.onclick = () => { currentQIndex++; renderQuestion(); };
+        }
+    }
+
+    function selectOpt(idx) {
+        userAnswers[currentQIndex] = idx;
+        renderQuestion();
+    }
+
+    function prevQuestion() {
+        if(currentQIndex > 0) { currentQIndex--; renderQuestion(); }
+    }
+
+    async function finishExam(force) {
+        clearInterval(examTimer);
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        let autoScore = 0, totalPossible = 0, hasEssay = false;
+        currentExam.questions.forEach((q, idx) => {
+            totalPossible += parseInt(q.points);
+            if (q.type === 'MCQ' && userAnswers[idx] === q.correct) autoScore += parseInt(q.points);
+            if (q.type === 'ESSAY') hasEssay = true;
+        });
+
+        const resultObj = {
+            examId: currentExam.id,
+            examTitle: currentExam.title,
+            studentName: currentUser.name,
+            studentGrade: currentUser.grade,
+            autoScore, essayScore: 0, totalPossible,
+            status: hasEssay ? 'PENDING' : 'GRADED',
+            userAnswers,
+            submittedAt: new Date().toLocaleString('ar-EG')
+        };
+
+        await apiFetch('results', 'POST', resultObj);
+        document.getElementById('loadingOverlay').style.display = 'none';
+        alert("تم تسليم الامتحان بنجاح!");
+        switchTab('resultsTab');
+    }
+
+    function renderStudentResults() {
+        const container = document.getElementById('resultsList');
+        container.innerHTML = "";
+        const list = userResults.filter(r => r.studentName === currentUser.name);
+
+        if (list.length === 0) {
+            container.innerHTML = "<p style='text-align:center;'>لا توجد نتائج مسجلة.</p>";
+            return;
+        }
+
+        list.forEach(r => {
+            const score = r.autoScore + (r.essayScore || 0);
+            container.innerHTML += `
+                <div class="exam-card">
+                    <div>
+                        <h4>${r.examTitle}</h4>
+                        <p style="font-size:12px;">التاريخ: ${r.submittedAt}</p>
+                    </div>
+                    <div><b>${r.status === 'PENDING' ? '⏳ قيد التصحيح' : `${score} /${r.totalPossible}`}</b></div>
+                </div>
+            `;
+        });
+    }
+
+    function toggleTeacherView(v) {
+        showScreen('teacherScreen');
+        document.getElementById('addExamForm').style.display = v === 'addExam' ? 'block' : 'none';
+        document.getElementById('teacherResultsSection').style.display = v === 'viewResults' ? 'block' : 'none';
+        document.getElementById('teacherPendingSection').style.display = v === 'viewPending' ? 'block' : 'none';
+        document.getElementById('teacherAttendanceSection').style.display = v === 'trackAttendance' ? 'block' : 'none';
+        document.getElementById('teacherManageExamsSection').style.display = v === 'manageExams' ? 'block' : 'none';
+
+        if(v === 'addExam' && document.getElementById('questionsBuilder').children.length === 0) addQuestionField('MCQ');
+        if(v === 'viewResults') renderTeacherResultsTable();
+        if(v === 'viewPending') renderPendingList();
+        if(v === 'trackAttendance') populateAttendanceExamDropdown();
+        if(v === 'manageExams') renderManageExamsList();
+    }
+
+    function goBackToResults() {
+        toggleTeacherView('viewResults');
+    }
+
+    function goToAddExamScreen() {
+        toggleTeacherView('addExam');
+    }
+
+    function populateAttendanceExamDropdown() {
+        const select = document.getElementById('attendanceExamSelect');
+        select.innerHTML = '<option value="" disabled selected>اختر الامتحان...</option>';
+        examsData.forEach(exam => {
+            select.innerHTML += `<option value="${exam.id}">${exam.title} (${exam.grade})</option>`;
+        });
+    }
+
+    function renderAttendanceTracker() {
+        const examId = document.getElementById('attendanceExamSelect').value;
+        const exam = examsData.find(e => e.id === examId);
+        if (!exam) return;
+
+        document.getElementById('attendanceContainer').style.display = 'block';
+
+        const targetStudents = exam.grade === 'جميع الصفوف' 
+            ? allStudents 
+            : allStudents.filter(s => s.grade === exam.grade);
+
+        const attendedTable = document.getElementById('attendedStudentsTable');
+        const absentTable = document.getElementById('absentStudentsTable');
+        
+        attendedTable.innerHTML = "";
+        absentTable.innerHTML = "";
+
+        const examResults = userResults.filter(r => r.examId === examId);
+        const attendedNames = examResults.map(r => r.studentName);
+
+        if (examResults.length === 0) {
+            attendedTable.innerHTML = "<tr><td colspan='4'>لم يقم أي طالب بأداء هذا الامتحان بعد.</td></tr>";
+        } else {
+            examResults.forEach(r => {
+                const totalScore = r.autoScore + (r.essayScore || 0);
+                attendedTable.innerHTML += `
+                    <tr>
+                        <td><b>${r.studentName}</b></td>
+                        <td>${r.studentGrade}</td>
+                        <td>${r.status === 'PENDING' ? 'معلق' : `<b style="color:green;">${totalScore} /${r.totalPossible}</b>`}</td>
+                        <td>${r.submittedAt}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        const absentStudents = targetStudents.filter(s => !attendedNames.includes(s.name));
+        if (absentStudents.length === 0) {
+            absentTable.innerHTML = "<tr><td colspan='3' style='color:green;'>🎉 جميع الطلاب المسجلين بالصف أدوا الامتحان.</td></tr>";
+        } else {
+            absentStudents.forEach(s => {
+                absentTable.innerHTML += `
+                    <tr>
+                        <td><b>${s.name}</b></td>
+                        <td>${s.grade}</td>
+                        <td><span style="color:red; font-weight:bold;">غائب ❌</span></td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    function addQuestionField(type) {
+        qCounter++;
+        const builder = document.getElementById('questionsBuilder');
+        const div = document.createElement('div');
+        div.className = "exam-card";
+        div.style.flexDirection = "column";
+        div.dataset.type = type;
+
+        if (type === 'MCQ') {
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; width:100%;">
+                    <strong>سؤال اختيار من متعدد (${qCounter})</strong>
+                    <button type="button" onclick="this.parentElement.parentElement.remove()" style="color:red; background:none; border:none;">حذف ❌</button>
+                </div>
+                <input type="text" class="q-text" placeholder="نص السؤال..." required style="margin:5px 0;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; width:100%;">
+                    <input type="text" class="q-opt-0" placeholder="الخيار (أ)" required>
+                    <input type="text" class="q-opt-1" placeholder="الخيار (ب)" required>
+                    <input type="text" class="q-opt-2" placeholder="الخيار (ج)" required>
+                    <input type="text" class="q-opt-3" placeholder="الخيار (د)" required>
+                </div>
+                <div style="display:flex; gap:5px; width:100%; margin-top:5px;">
+                    <select class="q-correct" style="flex:2;">
+                        <option value="0">الخيار (أ) هو الإجابة الصحيحة</option>
+                        <option value="1">الخيار (ب) هو الإجابة الصحيحة</option>
+                        <option value="2">الخيار (ج) هو الإجابة الصحيحة</option>
+                        <option value="3">الخيار (د) هو الإجابة الصحيحة</option>
+                    </select>
+                    <input type="number" class="q-points" value="1" min="1" style="flex:1;" placeholder="الدرجة">
+                </div>
+            `;
+        } else {
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; width:100%;">
+                    <strong style="color:#8b3a3a;">سؤال مقالي (${qCounter})</strong>
+                    <button type="button" onclick="this.parentElement.parentElement.remove()" style="color:red; background:none; border:none;">حذف ❌</button>
+                </div>
+                <input type="text" class="q-text" placeholder="نص السؤال..." required style="margin:5px 0;">
+                <textarea class="q-model" placeholder="الإجابة النموذجية (تظهر للميس أثناء التصحيح)..." rows="2" style="margin-bottom:5px;"></textarea>
+                <input type="number" class="q-points" value="2" min="1" placeholder="الدرجة المخصصة">
+            `;
+        }
+        builder.appendChild(div);
+    }
+
+    async function createNewExam(e) {
+        e.preventDefault();
+        const title = document.getElementById('newExamTitle').value.trim();
+        const grade = document.getElementById('newExamGrade').value;
+        const duration = parseInt(document.getElementById('newExamDuration').value);
+
+        const qNodes = document.getElementById('questionsBuilder').children;
+        if (qNodes.length === 0) return alert("أضف سؤالاً واحداً على الأقل!");
+
+        const questions = [];
+        for (let n of qNodes) {
+            const type = n.dataset.type;
+            const text = n.querySelector('.q-text').value;
+            const points = parseInt(n.querySelector('.q-points').value);
+            if(type === 'MCQ') {
+                const options = [n.querySelector('.q-opt-0').value, n.querySelector('.q-opt-1').value, n.querySelector('.q-opt-2').value, n.querySelector('.q-opt-3').value];
+                const correct = parseInt(n.querySelector('.q-correct').value);
+                questions.push({ type, text, options, correct, points });
+            } else {
+                const modelAnswer = n.querySelector('.q-model').value;
+                questions.push({ type, text, modelAnswer, points });
+            }
+        }
+
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        await apiFetch('exams', 'POST', { id: Date.now().toString(), title, grade, duration, questions });
+        document.getElementById('loadingOverlay').style.display = 'none';
+
+        alert("تم نشر الامتحان أونلاين بنجاح!");
+        document.getElementById('addExamForm').reset();
+        document.getElementById('questionsBuilder').innerHTML = "";
+        toggleTeacherView('viewResults');
+    }
+
+    function renderTeacherResultsTable() {
+        const tbody = document.getElementById('studentsResultsTable');
+        tbody.innerHTML = "";
+        userResults.forEach(r => {
+            const score = r.autoScore + (r.essayScore || 0);
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${r.studentName}</b></td>
+                    <td>${r.studentGrade}</td>
+                    <td>${r.examTitle}</td>
+                    <td>${r.status === 'PENDING' ? 'معلق' : `<b style="color:green;">${score}/${r.totalPossible}</b>`}</td>
+                    <td>${r.submittedAt}</td>
+                    <td>
+                        <button class="btn" style="padding:4px 8px; font-size:11px;" onclick="teacherGradePaper('${r.firebaseKey}')">عرض الورقة</button>
+                        <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deleteResult('${r.firebaseKey}')">حذف</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function teacherGradePaper(key) {
+        const result = userResults.find(r => r.firebaseKey === key);
+        const exam = examsData.find(e => e.id === result.examId);
+        if(!result || !exam) return alert("تعذر تحميل ورقة الطالب!");
+
+        showScreen('teacherReviewModal');
+        document.getElementById('reviewStudentTitle').innerText = `إجابات الطالب: ${result.studentName} (${result.studentGrade})`;
+
+        const body = document.getElementById('reviewStudentBody');
+        body.innerHTML = "";
+
+        const labels = ['أ', 'ب', 'ج', 'د'];
+
+        exam.questions.forEach((q, idx) => {
+            const userAns = result.userAnswers[idx];
+            const div = document.createElement('div');
+            div.style.background = "#fdf8f8";
+            div.style.padding = "10px";
+            div.style.borderRadius = "8px";
+            div.style.marginBottom = "10px";
+            div.style.border = "1px solid #cbd5e1";
+
+            if (q.type === 'MCQ') {
+                const isCorrect = userAns === q.correct;
+                const userChoiceLabel = labels[userAns] !== undefined ? `(${labels[userAns]}) ${q.options[userAns]}` : 'لم يجب';
+                div.innerHTML = `
+                    <p><strong>س${idx+1}: ${q.text}</strong> [${q.points} درجة]</p>
+                    <p style="font-size:13px; color:${isCorrect ? 'green' : 'red'};">
+                        إجابة الطالب: ${userChoiceLabel} ${isCorrect ? '✅' : '❌'}
+                    </p>
+                `;
+            } else {
+                const existingEssayScore = result.essayScore !== undefined ? result.essayScore : 0;
+                div.innerHTML = `
+                    <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجة]</p>
+                    <p style="background:white; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:13px;">
+                        إجابة الطالب: ${userAns || 'لا توجد إجابة مكتوبة'}
+                    </p>
+                    ${q.modelAnswer ? `<p style="font-size:12px; color:#10b981; background:#ecfdf5; padding:5px; border-radius:4px;"><b>الإجابة النموذجية:</b> ${q.modelAnswer}</p>` : ''}
+                    <div style="margin-top:5px;">
+                        <label style="font-size:12px;">درجة هذا السؤال (الدرجة القصوى ${q.points}):</label>
+                        <input type="number" class="essay-score-input" data-max="${q.points}" value="${existingEssayScore}" style="width:100px;">
+                    </div>
+                `;
+            }
+            body.appendChild(div);
+        });
+
+        body.innerHTML += `<button class="btn btn-success" style="margin-top:10px;" onclick="saveEssayGrading('${key}')">حفظ الدرجات واعتماد النتيجة 💾</button>`;
+    }
+
+    async function saveEssayGrading(key) {
+        let totalEssayScore = 0;
+        let isValid = true;
+
+        const inputs = document.querySelectorAll('.essay-score-input');
+        
+        inputs.forEach(input => {
+            const maxVal = parseFloat(input.dataset.max);
+            let val = parseFloat(input.value);
+
+            if (isNaN(val) || val < 0) {
+                alert(`⚠️ رجاءً أدخلي درجة صحيحة للسؤال!`);
+                isValid = false;
+                return;
+            }
+
+            if (val > maxVal) {
+                alert(`⚠️ تنبيه: أدخلتِ درجة (${val}) وهي أعلى من الحد الأقصى المسموح به لهذا السؤال (${maxVal} درجة)!`);
+                isValid = false;
+                return;
+            }
+
+            totalEssayScore += val;
+        });
+
+        if (!isValid) return;
+
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        await apiFetch(`results/${key}`, 'PATCH', { essayScore: totalEssayScore, status: 'GRADED' });
+        await syncData();
+        document.getElementById('loadingOverlay').style.display = 'none';
+
+        alert("تم اعتماد درجات الأسئلة المقالية وتحديث النتيجة للطالب بنجاح! 🎉");
+        toggleTeacherView('viewResults');
+    }
+
+    async function deleteResult(key) {
+        if(confirm("حذف النتيجة؟")) {
+            await apiFetch(`results/${key}`, 'DELETE');
+            await syncData();
+            renderTeacherResultsTable();
+        }
+    }
+
+    function updatePendingBadge() {
+        const pending = userResults.filter(r => r.status === 'PENDING').length;
+        const b = document.getElementById('pendingBadge');
+        if(pending > 0) { b.innerText = pending; b.style.display = 'inline-block'; }
+        else b.style.display = 'none';
+    }
+
+    function renderPendingList() {
+        const c = document.getElementById('pendingList');
+        c.innerHTML = "";
+        const pending = userResults.filter(r => r.status === 'PENDING');
+        if(pending.length === 0) {
+            c.innerHTML = "<p>لا توجد امتحانات تنتظر تصحيح المقالي حالياً.</p>";
+            return;
+        }
+        pending.forEach(r => {
+            c.innerHTML += `<div class="exam-card"><div><h4>${r.studentName}</h4><p>${r.examTitle}</p></div><button class="btn btn-warning" onclick="teacherGradePaper('${r.firebaseKey}')">فتح للتصحيح ✏️</button></div>`;
+        });
+    }
+
+    function renderManageExamsList() {
+        const c = document.getElementById('manageExamsList');
+        c.innerHTML = "";
+        examsData.forEach(e => {
+            c.innerHTML += `<div class="exam-card"><div><h4>${e.title}</h4></div><button class="btn btn-danger" onclick="deleteExam('${e.firebaseKey}')">حذف الامتحان</button></div>`;
+        });
+    }
+
+    async function deleteExam(key) {
+        if(confirm("حذف الامتحان بالكامل؟")) {
+            await apiFetch(`exams/${key}`, 'DELETE');
+            await syncData();
+            renderManageExamsList();
+        }
+    }
+
+    function closeTeacherPanel() { currentUser ? setupLoggedInUser() : showScreen('loginScreen'); }
+
+    window.onload = function() {
+        if (currentUser) {
+            setupLoggedInUser();
+        } else {
+            showScreen('loginScreen');
+        }
+        syncData();
+    };
+</script>
+</body>
+</html>
