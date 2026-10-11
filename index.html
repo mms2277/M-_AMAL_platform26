@@ -192,7 +192,6 @@
         .stat-card h4 { margin: 0; font-size: 20px; color: var(--secondary); }
         .stat-card p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; }
 
-        /* العلامة المائية الأمنية */
         .watermark-container {
             position: absolute;
             top: 0;
@@ -457,7 +456,7 @@
             <button class="btn btn-secondary" style="margin-top:15px;" onclick="switchTab('resultsTab')">العودة للنتائج ↩️</button>
         </div>
 
-        <!-- شاشة الامتحان (مضمنة بعلامة مائية أمنية) -->
+        <!-- شاشة الامتحان -->
         <div id="quizScreen" class="screen">
             <div class="watermark-container" id="watermarkBox"></div>
 
@@ -499,7 +498,7 @@
     let examTimer = null;
     let timeLeftSeconds = 0;
     let qCounter = 0;
-    let lastReviewSource = 'viewResults'; // لمتابعة المصدر وإعادة المدرس إليه
+    let lastReviewSource = 'viewResults';
 
     async function apiFetch(endpoint, method = 'GET', data = null) {
         try {
@@ -678,7 +677,6 @@
         userAnswers = new Array(currentExam.questions.length).fill("");
         timeLeftSeconds = currentExam.duration * 60;
 
-        // تفعيل العلامة المائية الشفافة بالبيانات لحماية الامتحان
         const watermarkBox = document.getElementById('watermarkBox');
         watermarkBox.innerHTML = Array(25).fill(`<span>🔒 ${currentUser.name} - ${currentUser.grade}</span>`).join('');
 
@@ -829,12 +827,16 @@
                     ${!isCorrect ? `<p style="font-size:13px; color:green; margin:3px 0;"><b>الإجابة الصحيحة:</b> ${correctChoiceLabel}</p>` : ''}
                 `;
             } else {
+                const obtainedEssay = result.essayScore !== undefined ? result.essayScore : 0;
                 div.innerHTML = `
-                    <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجة]</p>
+                    <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجات]</p>
                     <p style="background:white; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:13px;">
                         إجابتك المكتوبة: ${userAns || 'لا توجد إجابة'}
                     </p>
                     ${q.modelAnswer ? `<p style="font-size:12px; color:#10b981; background:#ecfdf5; padding:5px; border-radius:4px;"><b>الإجابة النموذجية:</b> ${q.modelAnswer}</p>` : ''}
+                    <p style="font-size:13px; color:var(--primary); margin-top:5px; font-weight:bold;">
+                        درجة السؤال المقالي: ${obtainedEssay} / ${q.points}
+                    </p>
                 `;
             }
             body.appendChild(div);
@@ -1051,34 +1053,54 @@
                     <p style="font-size:13px; color:${isCorrect ? 'green' : 'red'}; margin:3px 0;">
                         إجابة الطالب: ${userChoiceLabel} ${isCorrect ? '✅' : '❌'}
                     </p>
-
                     ${!isCorrect ? `<p style="font-size:13px; color:green; margin:3px 0;"><b>الإجابة الصحيحة:</b> ${correctChoiceLabel}</p>` : ''}
                 `;
             } else {
                 const existingEssayScore = result.essayScore !== undefined ? result.essayScore : 0;
-                div.innerHTML = `
-                    <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجة]</p>
-                    <p style="background:white; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:13px;">
-                        إجابة الطالب: ${userAns || 'لا توجد إجابة مكتوبة'}
-                    </p>
-                    ${q.modelAnswer ? `<p style="font-size:12px; color:#10b981; background:#ecfdf5; padding:5px; border-radius:4px;"><b>الإجابة النموذجية:</b> ${q.modelAnswer}</p>` : ''}
-                    <div style="margin-top:8px;">
-                        <label style="font-size:12px;">حدد درجة السؤال (الحد الأقصى ${q.points} درجة):</label>
-                        <input type="number" class="essay-score-input" data-max="${q.points}" value="${existingEssayScore}" min="0" max="${q.points}" style="width:110px;">
-                    </div>
-                `;
+                
+                // إذا فتح المدرس من الجدول (viewResults)، يتم عرض الدرجة فقط بدون خانة تعديل أو زر اعتماد
+                if (source === 'viewResults') {
+                    div.innerHTML = `
+                        <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجات]</p>
+                        <p style="background:white; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:13px;">
+                            إجابة الطالب: ${userAns || 'لا توجد إجابة مكتوبة'}
+                        </p>
+                        ${q.modelAnswer ? `<p style="font-size:12px; color:#10b981; background:#ecfdf5; padding:5px; border-radius:4px;"><b>الإجابة النموذجية:</b> ${q.modelAnswer}</p>` : ''}
+                        <p style="font-size:13px; color:var(--primary); margin-top:5px; font-weight:bold;">
+                            درجة السؤال المقالي: ${existingEssayScore} / ${q.points}
+                        </p>
+                    `;
+                } else {
+                    // إذا فتح من قائمة التصحيح المعلق (viewPending)، تظهر خانة التعديل وزر الحفظ والاعتماد
+                    div.innerHTML = `
+                        <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجات]</p>
+                        <p style="background:white; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:13px;">
+                            إجابة الطالب: ${userAns || 'لا توجد إجابة مكتوبة'}
+                        </p>
+                        ${q.modelAnswer ? `<p style="font-size:12px; color:#10b981; background:#ecfdf5; padding:5px; border-radius:4px;"><b>الإجابة النموذجية:</b> ${q.modelAnswer}</p>` : ''}
+                        <div style="margin-top:8px;">
+                            <label style="font-size:12px;">حدد درجة السؤال (الحد الأقصى ${q.points} درجة):</label>
+                            <input type="number" class="essay-score-input" data-max="${q.points}" value="${existingEssayScore}" min="0" max="${q.points}" style="width:110px;">
+                        </div>
+                    `;
+                }
             }
             body.appendChild(div);
         });
 
-        // زر الحركة التفاعلي حسب الخيار المحدد
         const actionArea = document.getElementById('teacherReviewActionArea');
         const backBtnText = source === 'viewPending' ? 'العودة لقائمة تصحيح المقالي ↩️' : 'العودة لجدول النتائج ↩️';
         
-        actionArea.innerHTML = `
-            <button class="btn btn-success" style="margin-bottom:8px;" onclick="saveEssayGrading('${key}')">حفظ الدرجات واعتماد النتيجة 💾</button>
-            <button class="btn btn-secondary" onclick="goBackFromReview()">${backBtnText}</button>
-        `;
+        if (source === 'viewPending') {
+            actionArea.innerHTML = `
+                <button class="btn btn-success" style="margin-bottom:8px;" onclick="saveEssayGrading('${key}')">حفظ الدرجات واعتماد النتيجة 💾</button>
+                <button class="btn btn-secondary" onclick="goBackFromReview()">${backBtnText}</button>
+            `;
+        } else {
+            actionArea.innerHTML = `
+                <button class="btn btn-secondary" onclick="goBackFromReview()">${backBtnText}</button>
+            `;
+        }
     }
 
     async function saveEssayGrading(key) {
