@@ -191,6 +191,26 @@
         .stat-card { background: #fdf8f8; border: 1px solid #f3e5e5; padding: 15px; border-radius: 12px; text-align: center; }
         .stat-card h4 { margin: 0; font-size: 20px; color: var(--secondary); }
         .stat-card p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; }
+
+        /* العلامة المائية الأمنية */
+        .watermark-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.08;
+            font-size: 16px;
+            color: #000;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-content: space-around;
+            z-index: 5;
+            overflow: hidden;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -368,7 +388,10 @@
 
             <!-- التصحيح المقالي -->
             <div id="teacherPendingSection" style="display: none;">
-                <h4 style="margin-bottom: 10px; color: var(--primary);">قائمة الامتحانات بانتظار تصحيح الأسئلة المقالية:</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin:0; color: var(--primary);">قائمة الامتحانات بانتظار تصحيح الأسئلة المقالية:</h4>
+                    <button class="btn btn-success" style="width:auto; padding:6px 12px; font-size:12px;" onclick="toggleTeacherView('viewResults')">عرض جدول النتائج 📊</button>
+                </div>
                 <div id="pendingList"></div>
             </div>
 
@@ -434,8 +457,10 @@
             <button class="btn btn-secondary" style="margin-top:15px;" onclick="switchTab('resultsTab')">العودة للنتائج ↩️</button>
         </div>
 
-        <!-- شاشة الامتحان -->
+        <!-- شاشة الامتحان (مضمنة بعلامة مائية أمنية) -->
         <div id="quizScreen" class="screen">
+            <div class="watermark-container" id="watermarkBox"></div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <span id="progressText" style="font-size: 13px; font-weight: bold; color: var(--primary);">0%</span>
                 <div class="timer" id="timerDisplay" style="margin-bottom:0; padding:6px 12px;">الوقت المتبقي: 00:00</div>
@@ -450,14 +475,12 @@
             </div>
         </div>
 
-        <!-- شاشة معاينة ورقة الطالب للمعلم (تم التعديل لإبقاء زر العودة للجدول فقط) -->
+        <!-- شاشة معاينة وتصحيح ورقة الطالب للمعلم -->
         <div id="teacherReviewModal" class="screen">
             <h3 id="reviewStudentTitle" style="color: var(--primary); margin-bottom: 15px;"></h3>
             <div id="reviewStudentBody"></div>
             
-            <div style="margin-top: 15px;">
-                <button type="button" class="btn btn-secondary" onclick="goBackToResults()">العودة للجدول ↩️</button>
-            </div>
+            <div style="margin-top: 15px;" id="teacherReviewActionArea"></div>
         </div>
     </div>
 </div>
@@ -476,6 +499,7 @@
     let examTimer = null;
     let timeLeftSeconds = 0;
     let qCounter = 0;
+    let lastReviewSource = 'viewResults'; // لمتابعة المصدر وإعادة المدرس إليه
 
     async function apiFetch(endpoint, method = 'GET', data = null) {
         try {
@@ -654,6 +678,10 @@
         userAnswers = new Array(currentExam.questions.length).fill("");
         timeLeftSeconds = currentExam.duration * 60;
 
+        // تفعيل العلامة المائية الشفافة بالبيانات لحماية الامتحان
+        const watermarkBox = document.getElementById('watermarkBox');
+        watermarkBox.innerHTML = Array(25).fill(`<span>🔒 ${currentUser.name} - ${currentUser.grade}</span>`).join('');
+
         showScreen('quizScreen');
         startTimer();
         renderQuestion();
@@ -828,7 +856,9 @@
         if(v === 'manageExams') renderManageExamsList();
     }
 
-    function goBackToResults() { toggleTeacherView('viewResults'); }
+    function goBackFromReview() {
+        toggleTeacherView(lastReviewSource);
+    }
 
     function populateAttendanceExamDropdown() {
         const select = document.getElementById('attendanceExamSelect');
@@ -979,7 +1009,7 @@
                     <td>${r.status === 'PENDING' ? 'معلق' : `<b style="color:green;">${score}/${r.totalPossible}</b>`}</td>
                     <td>${r.submittedAt}</td>
                     <td>
-                        <button class="btn" style="padding:4px 8px; font-size:11px;" onclick="teacherGradePaper('${r.firebaseKey}')">عرض الورقة</button>
+                        <button class="btn" style="padding:4px 8px; font-size:11px;" onclick="teacherGradePaper('${r.firebaseKey}', 'viewResults')">عرض الورقة</button>
                         <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="deleteResult('${r.firebaseKey}')">حذف</button>
                     </td>
                 </tr>
@@ -987,14 +1017,15 @@
         });
     }
 
-    // معاينة ورقة إجابات الطالب بواسطة المعلم لمعرفة أخطائه
-    function teacherGradePaper(key) {
+    // معاينة وتصحيح ورقة إجابات الطالب بواسطة المعلم
+    function teacherGradePaper(key, source = 'viewPending') {
+        lastReviewSource = source;
         const result = userResults.find(r => r.firebaseKey === key);
         const exam = examsData.find(e => e.id === result.examId);
         if(!result || !exam) return alert("تعذر تحميل ورقة الطالب!");
 
         showScreen('teacherReviewModal');
-        document.getElementById('reviewStudentTitle').innerText = `ورقة الطالب: ${result.studentName} (${result.studentGrade})`;
+        document.getElementById('reviewStudentTitle').innerText = `إجابات الطالب: ${result.studentName} (${result.studentGrade})`;
 
         const body = document.getElementById('reviewStudentBody');
         body.innerHTML = "";
@@ -1020,19 +1051,70 @@
                     <p style="font-size:13px; color:${isCorrect ? 'green' : 'red'}; margin:3px 0;">
                         إجابة الطالب: ${userChoiceLabel} ${isCorrect ? '✅' : '❌'}
                     </p>
+
                     ${!isCorrect ? `<p style="font-size:13px; color:green; margin:3px 0;"><b>الإجابة الصحيحة:</b> ${correctChoiceLabel}</p>` : ''}
                 `;
             } else {
+                const existingEssayScore = result.essayScore !== undefined ? result.essayScore : 0;
                 div.innerHTML = `
                     <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجة]</p>
                     <p style="background:white; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:13px;">
                         إجابة الطالب: ${userAns || 'لا توجد إجابة مكتوبة'}
                     </p>
                     ${q.modelAnswer ? `<p style="font-size:12px; color:#10b981; background:#ecfdf5; padding:5px; border-radius:4px;"><b>الإجابة النموذجية:</b> ${q.modelAnswer}</p>` : ''}
+                    <div style="margin-top:8px;">
+                        <label style="font-size:12px;">حدد درجة السؤال (الحد الأقصى ${q.points} درجة):</label>
+                        <input type="number" class="essay-score-input" data-max="${q.points}" value="${existingEssayScore}" min="0" max="${q.points}" style="width:110px;">
+                    </div>
                 `;
             }
             body.appendChild(div);
         });
+
+        // زر الحركة التفاعلي حسب الخيار المحدد
+        const actionArea = document.getElementById('teacherReviewActionArea');
+        const backBtnText = source === 'viewPending' ? 'العودة لقائمة تصحيح المقالي ↩️' : 'العودة لجدول النتائج ↩️';
+        
+        actionArea.innerHTML = `
+            <button class="btn btn-success" style="margin-bottom:8px;" onclick="saveEssayGrading('${key}')">حفظ الدرجات واعتماد النتيجة 💾</button>
+            <button class="btn btn-secondary" onclick="goBackFromReview()">${backBtnText}</button>
+        `;
+    }
+
+    async function saveEssayGrading(key) {
+        let totalEssayScore = 0;
+        let isValid = true;
+
+        const inputs = document.querySelectorAll('.essay-score-input');
+        
+        inputs.forEach(input => {
+            const maxVal = parseFloat(input.dataset.max);
+            let val = parseFloat(input.value);
+
+            if (isNaN(val) || val < 0) {
+                alert(`⚠️ رجاءً أدخلي درجة صحيحة للسؤال!`);
+                isValid = false;
+                return;
+            }
+
+            if (val > maxVal) {
+                alert(`⚠️ تنبيه: أدخلتِ درجة (${val}) وهي أعلى من الحد الأقصى المسموح به لهذا السؤال (${maxVal} درجة)!`);
+                isValid = false;
+                return;
+            }
+
+            totalEssayScore += val;
+        });
+
+        if (!isValid) return;
+
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        await apiFetch(`results/${key}`, 'PATCH', { essayScore: totalEssayScore, status: 'GRADED' });
+        await syncData();
+        document.getElementById('loadingOverlay').style.display = 'none';
+
+        alert("تم حفظ الدرجات وتحديث نتيجة الطالب بنجاح! 🎉");
+        goBackFromReview();
     }
 
     async function deleteResult(key) {
@@ -1055,11 +1137,11 @@
         c.innerHTML = "";
         const pending = userResults.filter(r => r.status === 'PENDING');
         if(pending.length === 0) {
-            c.innerHTML = "<p>لا توجد امتحانات تنتظر تصحيح المقالي حالياً.</p>";
+            c.innerHTML = "<p style='text-align:center;'>لا توجد امتحانات تنتظر تصحيح المقالي حالياً.</p>";
             return;
         }
         pending.forEach(r => {
-            c.innerHTML += `<div class="exam-card"><div><h4>${r.studentName}</h4><p>${r.examTitle}</p></div><button class="btn btn-warning" onclick="teacherGradePaper('${r.firebaseKey}')">فتح للتصحيح ✏️</button></div>`;
+            c.innerHTML += `<div class="exam-card"><div><h4>${r.studentName}</h4><p>${r.examTitle}</p></div><button class="btn btn-warning" onclick="teacherGradePaper('${r.firebaseKey}', 'viewPending')">فتح للتصحيح ✏️</button></div>`;
         });
     }
 
