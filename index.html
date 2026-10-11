@@ -474,7 +474,7 @@
             <button class="btn btn-secondary" style="margin-top:15px;" onclick="switchTab('resultsTab')">العودة للنتائج ↩️</button>
         </div>
 
-        <!-- شاشة الامتحان (مع شريط التقدم الجديد) -->
+        <!-- شاشة الامتحان -->
         <div id="quizScreen" class="screen">
             <div class="watermark-container" id="watermarkBox"></div>
 
@@ -522,7 +522,9 @@
     let timeLeftSeconds = 0;
     let qCounter = 0;
     let lastReviewSource = 'viewResults';
+    
     let tabSwitchCount = 0;
+    let lastViolationTime = 0; // لمنع احتساب الأحداث المزدوجة اللحظية
 
     // 🔒 1. حماية التحديد وقفل الاختصارات والقائمة
     document.addEventListener('contextmenu', e => e.preventDefault());
@@ -538,16 +540,22 @@
         }
     });
 
-    // 🔒 2. معالجة كشف محاولات الخروج من الامتحان للتنبيه المزدوج
+    // 🔒 2. خوارزمية كشف مغادرة شاشة الامتحان (مع مانع التكرار اللحظي)
     function handleSecurityViolation() {
-        if (document.getElementById('quizScreen').classList.contains('active')) {
-            tabSwitchCount++;
-            if (tabSwitchCount === 1) {
-                alert("⚠️ تنبيه أمني تحذيري (المرة الأولى): يُمنع الخروج من صفحة الامتحان أو مغادرة التبويب! الخروج لمرة ثانية سيؤدي لتسليم الامتحان فوراً.");
-            } else if (tabSwitchCount >= 2) {
-                alert("🚨 تنبيه حاسم (المرة الثانية): تم كشف مغادرتك لصفحة الامتحان مجدداً! جاري تسليم الورقة أوتوماتيكياً بسبب محاولة الغش.");
-                finishExam(true);
-            }
+        if (!document.getElementById('quizScreen').classList.contains('active')) return;
+
+        const now = Date.now();
+        // إغلاق الثغرة: تجاهل أي حدث ثاني يحدث في أقل من ثانية ونصف من الحدث الأول
+        if (now - lastViolationTime < 1500) return;
+        lastViolationTime = now;
+
+        tabSwitchCount++;
+
+        if (tabSwitchCount === 1) {
+            alert("⚠️ تنبيه أمني تحذيري (المرة الأولى):\nيُمنع الخروج من صفحة الامتحان أو فتح تطبيق آخر!\n🚨 الخروج مرة ثانية سيؤدي لتسليم الامتحان فوراً بدون إنذار.");
+        } else if (tabSwitchCount >= 2) {
+            alert("🚨 تنبيه حاسم (المرة الثانية):\nتم كشف مغادرتك لصفحة الامتحان مجدداً!\nتم تسليم ورقة الامتحان تلقائياً بقرار الحماية من الغش.");
+            finishExam(true);
         }
     }
 
@@ -736,6 +744,7 @@
         currentExam = examsData.find(e => e.firebaseKey === key);
         currentQIndex = 0;
         tabSwitchCount = 0;
+        lastViolationTime = 0;
         userAnswers = new Array(currentExam.questions.length).fill("");
         timeLeftSeconds = currentExam.duration * 60;
 
@@ -762,7 +771,6 @@
         }, 1000);
     }
 
-    // تحديث شريط التقدم وعداد الأسئلة المجاب عنها
     function updateProgressBar() {
         const totalQ = currentExam.questions.length;
         const answeredCount = userAnswers.filter(ans => ans !== "" && ans !== null && ans !== undefined).length;
@@ -817,7 +825,6 @@
     }
 
     async function finishExam(force) {
-        // التحقق من وجود أسئلة غير مُجاب عليها قبل التسليم (في حال لم يكن تسليم قسري بالوقت أو الغش)
         if (!force) {
             const unanswered = userAnswers.filter(ans => ans === "" || ans === null || ans === undefined).length;
             if (unanswered > 0) {
