@@ -21,6 +21,8 @@
 
         body {
             -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
             user-select: none;
             background: linear-gradient(135deg, #4a1c1c 0%, #702b2b 50%, #8b3a3a 100%);
             min-height: 100vh;
@@ -78,7 +80,7 @@
             gap: 4px;
         }
 
-        header h1 { font-size: 22px; margin: 0; color: white; font-weight: bold; }
+        header h1 { font-size: 22px; margin: 0; color: #f2c4c4; font-weight: bold; }
         header p { font-size: 12px; opacity: 0.9; margin: 0; }
 
         .menu-toggle-btn {
@@ -192,6 +194,7 @@
         .stat-card h4 { margin: 0; font-size: 20px; color: var(--secondary); }
         .stat-card p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; }
 
+        /* العلامة المائية الأمنية لحماية الامتحان */
         .watermark-container {
             position: absolute;
             top: 0;
@@ -200,7 +203,7 @@
             height: 100%;
             pointer-events: none;
             opacity: 0.08;
-            font-size: 16px;
+            font-size: 15px;
             color: #000;
             display: flex;
             flex-wrap: wrap;
@@ -212,7 +215,7 @@
         }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body oncontextmenu="return false;" onselectstart="return false;" ondragstart="return false;">
 
 <div id="loadingOverlay" class="loading-overlay">
     <div class="spinner"></div>
@@ -499,6 +502,46 @@
     let timeLeftSeconds = 0;
     let qCounter = 0;
     let lastReviewSource = 'viewResults';
+    let tabSwitchCount = 0; // لعدد مرات كشف مغادرة شاشة الامتحان
+
+    // 🔒 1. تقنيات الأمان الحية: منع نسخ النصوص وقفل الاختصارات وحظر القائمة
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('copy', e => e.preventDefault());
+    document.addEventListener('cut', e => e.preventDefault());
+    
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'u' || e.key === 'U' || e.key === 'v' || e.key === 'V')) {
+            e.preventDefault();
+        }
+        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+            e.preventDefault();
+        }
+    });
+
+    // 🔒 2. تقنية الأمان: منع مغادرة تبويب الامتحان أو الخروج من التطبيق
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden && document.getElementById('quizScreen').classList.contains('active')) {
+            tabSwitchCount++;
+            if (tabSwitchCount === 1) {
+                alert("⚠️ تحذير أمني هام: يمنع مغادرة تبويب الامتحان أو تصغير الصفحة أو استخدام تطبيق آخر!");
+            } else if (tabSwitchCount >= 2) {
+                alert("🚨 تم كشف خروجك من صفحة الامتحان لمرة ثانية! تم تسليم الامتحان تلقائياً بسبب محاولة الغش.");
+                finishExam(true);
+            }
+        }
+    });
+
+    window.addEventListener('blur', function() {
+        if (document.getElementById('quizScreen').classList.contains('active')) {
+            tabSwitchCount++;
+            if (tabSwitchCount === 1) {
+                alert("⚠️ تحذير أمني: يمنع فتح تطبيقات أخرى أو الخروج من نافذة الامتحان!");
+            } else if (tabSwitchCount >= 2) {
+                alert("🚨 تم كشف خروجك من الامتحان! تم تسليم الورقة تلقائياً.");
+                finishExam(true);
+            }
+        }
+    });
 
     async function apiFetch(endpoint, method = 'GET', data = null) {
         try {
@@ -674,9 +717,11 @@
     function startExam(key) {
         currentExam = examsData.find(e => e.firebaseKey === key);
         currentQIndex = 0;
+        tabSwitchCount = 0;
         userAnswers = new Array(currentExam.questions.length).fill("");
         timeLeftSeconds = currentExam.duration * 60;
 
+        // 🔒 تفعيل العلامة المائية الشفافة المكررة لحماية الامتحان
         const watermarkBox = document.getElementById('watermarkBox');
         watermarkBox.innerHTML = Array(25).fill(`<span>🔒 ${currentUser.name} - ${currentUser.grade}</span>`).join('');
 
@@ -1019,7 +1064,6 @@
         });
     }
 
-    // معاينة وتصحيح ورقة إجابات الطالب بواسطة المعلم
     function teacherGradePaper(key, source = 'viewPending') {
         lastReviewSource = source;
         const result = userResults.find(r => r.firebaseKey === key);
@@ -1058,7 +1102,6 @@
             } else {
                 const existingEssayScore = result.essayScore !== undefined ? result.essayScore : 0;
                 
-                // إذا فتح المدرس من الجدول (viewResults)، يتم عرض الدرجة فقط بدون خانة تعديل أو زر اعتماد
                 if (source === 'viewResults') {
                     div.innerHTML = `
                         <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجات]</p>
@@ -1071,7 +1114,6 @@
                         </p>
                     `;
                 } else {
-                    // إذا فتح من قائمة التصحيح المعلق (viewPending)، تظهر خانة التعديل وزر الحفظ والاعتماد
                     div.innerHTML = `
                         <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجات]</p>
                         <p style="background:white; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:13px;">
