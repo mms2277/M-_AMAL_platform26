@@ -9,8 +9,8 @@
 
     <style>
         :root {
-            --primary: #8b3a3a; /* لون طوبي دافئ وفاخر */
-            --secondary: #b35454; /* درجة طوبية أفتح للأزرار والتحديد */
+            --primary: #8b3a3a;
+            --secondary: #b35454;
             --accent: #d9534f;
             --pending: #f59e0b;
             --success: #10b981;
@@ -78,7 +78,7 @@
             gap: 4px;
         }
 
-        header h1 { font-size: 22px; margin: 0; color: white; font-weight: bold; }
+        header h1 { font-size: 22px; margin: 0; color: #f2c4c4; font-weight: bold; }
         header p { font-size: 12px; opacity: 0.9; margin: 0; }
 
         .menu-toggle-btn {
@@ -169,7 +169,6 @@
         .btn-danger { background: linear-gradient(45deg, #dc2626, #ef4444); }
         .btn-warning { background: linear-gradient(45deg, #d97706, #f59e0b); }
         .btn-secondary { background: linear-gradient(45deg, #475569, #64748b); }
-        .btn-excel { background: linear-gradient(45deg, #15803d, #16a34a); }
 
         .exam-card { background: #fdf8f8; border: 1px solid #f3e5e5; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .timer { font-size: 16px; font-weight: bold; color: var(--accent); background: #fef2f2; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; border: 1px solid #fecaca; }
@@ -178,7 +177,6 @@
         .option-btn.selected { background: var(--secondary); color: white; border-color: var(--secondary); }
 
         .user-bar { background: #fff5f5; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0d5d5; font-size: 13px; font-weight: bold; color: var(--primary); }
-        .badge-pending { background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 6px; font-size: 12px; }
         .notification-badge { background: red; color: white; border-radius: 50%; padding: 2px 7px; font-size: 12px; margin-right: 5px; }
 
         .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; color: white; text-align: center; flex-direction: column; }
@@ -193,32 +191,13 @@
         .stat-card { background: #fdf8f8; border: 1px solid #f3e5e5; padding: 15px; border-radius: 12px; text-align: center; }
         .stat-card h4 { margin: 0; font-size: 20px; color: var(--secondary); }
         .stat-card p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; }
-
-        .watermark-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            opacity: 0.06;
-            font-size: 18px;
-            color: #000;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-            align-content: space-around;
-            z-index: 5;
-            overflow: hidden;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
 <div id="loadingOverlay" class="loading-overlay">
     <div class="spinner"></div>
-    <h3>جاري حفظ البيانات وتحديث القاعدة...</h3>
+    <h3>جاري التحميل والحفظ...</h3>
 </div>
 
 <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
@@ -240,7 +219,7 @@
         <button id="teacherBtn" class="teacher-badge" onclick="openTeacherLogin()"><i class="fas fa-user-shield"></i> لوحة المعلم</button>
 
         <div class="header-brand-info">
-            <br> <h1><i class="fas fa-laptop-code"></i> منصة ميس أمل 👩🏻‍💻</h1>
+            <h1><i class="fas fa-laptop-code"></i> منصة ميس أمل 👩🏻‍💻</h1>
             <p>المنصة التعليمية للبرمجة والذكاء الاصطناعي 💻🤖</p>
         </div>
     </header>
@@ -328,21 +307,6 @@
 
             <!-- جدول نتائج الطلاب -->
             <div id="teacherResultsSection" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px;">
-                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label><i class="fas fa-filter"></i> فلترة حسب الصف الدراسي:</label>
-                        <select id="filterGradeSelect" onchange="renderTeacherResultsTable()">
-                            <option value="ALL">جميع الصفوف الدراسية</option>
-                            <option value="الأول الثانوي">الصف الأول الثانوي</option>
-                            <option value="الثاني الثانوي">الصف الثاني الثانوي</option>
-                            <option value="الثالث الثانوي">الصف الثالث الثانوي</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-excel" style="width: auto; height: 42px; margin-top: 20px;" onclick="exportResultsToExcel()">
-                        <i class="fas fa-file-excel"></i> تصدير لـ Excel
-                    </button>
-                </div>
-                
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -457,16 +421,21 @@
             <div id="examsList"></div>
         </div>
 
-        <!-- نتائج الطالب -->
+        <!-- نتائج الطالب والمراجعة -->
         <div id="resultsTab" class="screen">
             <h3 style="margin-bottom: 15px; color: var(--primary);"><i class="fas fa-trophy"></i> نتائجي والمراجعة:</h3>
             <div id="resultsList"></div>
         </div>
 
+        <!-- شاشة عرض ورقة إجابات الطالب بعد الاعتماد -->
+        <div id="studentReviewModal" class="screen">
+            <h3 id="studentReviewTitle" style="color: var(--primary); margin-bottom: 15px;">ورقة الإجابة والحل الصحيح</h3>
+            <div id="studentReviewBody"></div>
+            <button class="btn btn-secondary" style="margin-top:15px;" onclick="switchTab('resultsTab')">العودة للنتائج ↩️</button>
+        </div>
+
         <!-- شاشة الامتحان -->
         <div id="quizScreen" class="screen">
-            <div class="watermark-container" id="watermarkBox"></div>
-
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <span id="progressText" style="font-size: 13px; font-weight: bold; color: var(--primary);">0%</span>
                 <div class="timer" id="timerDisplay" style="margin-bottom:0; padding:6px 12px;">الوقت المتبقي: 00:00</div>
@@ -497,7 +466,7 @@
 <script>
     const FIREBASE_URL = "https://mrs-amal-platform-default-rtdb.firebaseio.com/";
 
-    let currentUser = null;
+    let currentUser = JSON.parse(localStorage.getItem('miss_amal_user')) || null;
     let examsData = [];
     let userResults = [];
     let allStudents = [];
@@ -508,7 +477,6 @@
     let examTimer = null;
     let timeLeftSeconds = 0;
     let qCounter = 0;
-    let tabSwitchCount = 0;
 
     async function apiFetch(endpoint, method = 'GET', data = null) {
         try {
@@ -523,38 +491,18 @@
     }
 
     async function syncData() {
-        const examsRes = await apiFetch('exams');
-        examsData = [];
-        if(examsRes) {
-            Object.keys(examsRes).forEach(k => examsData.push({ ...examsRes[k], firebaseKey: k }));
-        }
+        const [examsRes, resultsRes, studentsRes] = await Promise.all([
+            apiFetch('exams'),
+            apiFetch('results'),
+            apiFetch('students')
+        ]);
 
-        const resultsRes = await apiFetch('results');
-        userResults = [];
-        if(resultsRes) {
-            Object.keys(resultsRes).forEach(k => userResults.push({ ...resultsRes[k], firebaseKey: k }));
-        }
-
-        const studentsRes = await apiFetch('students');
-        allStudents = [];
-        if(studentsRes) {
-            Object.keys(studentsRes).forEach(k => allStudents.push(studentsRes[k]));
-        }
+        examsData = examsRes ? Object.keys(examsRes).map(k => ({ ...examsRes[k], firebaseKey: k })) : [];
+        userResults = resultsRes ? Object.keys(resultsRes).map(k => ({ ...resultsRes[k], firebaseKey: k })) : [];
+        allStudents = studentsRes ? Object.keys(studentsRes).map(k => studentsRes[k]) : [];
 
         updatePendingBadge();
     }
-
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden && document.getElementById('quizScreen').classList.contains('active')) {
-            tabSwitchCount++;
-            if (tabSwitchCount === 1) {
-                alert("⚠️ تحذير أمني: يمنع مغادرة تبويب الامتحان أو تصغير الصفحة!");
-            } else if (tabSwitchCount >= 2) {
-                alert("🚨 تم كشف خروجك من الصفحة لمرة ثانية! تم تسليم الامتحان تلقائياً بسب محاولة الغش.");
-                finishExam(true);
-            }
-        }
-    });
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -606,10 +554,8 @@
         if (name && grade) {
             currentUser = { name, grade };
             localStorage.setItem('miss_amal_user', JSON.stringify(currentUser));
-            
             const studentId = btoa(unescape(encodeURIComponent(name.toLowerCase())));
             await apiFetch(`students/${studentId}`, 'PUT', { name, grade });
-
             setupLoggedInUser();
         }
     }
@@ -706,12 +652,8 @@
     function startExam(key) {
         currentExam = examsData.find(e => e.firebaseKey === key);
         currentQIndex = 0;
-        tabSwitchCount = 0;
         userAnswers = new Array(currentExam.questions.length).fill("");
         timeLeftSeconds = currentExam.duration * 60;
-
-        const watermarkBox = document.getElementById('watermarkBox');
-        watermarkBox.innerHTML = Array(20).fill(`<span>${currentUser.name} - ${currentUser.grade}</span>`).join('');
 
         showScreen('quizScreen');
         startTimer();
@@ -798,6 +740,7 @@
         switchTab('resultsTab');
     }
 
+    // 🌟 عرض نتائج الطالب مع إضافة زر عرض الورقة إذا تم الاعتماد
     function renderStudentResults() {
         const container = document.getElementById('resultsList');
         container.innerHTML = "";
@@ -816,9 +759,60 @@
                         <h4>${r.examTitle}</h4>
                         <p style="font-size:12px;">التاريخ: ${r.submittedAt}</p>
                     </div>
-                    <div><b>${r.status === 'PENDING' ? '⏳ قيد التصحيح' : `${score} /${r.totalPossible}`}</b></div>
+                    <div style="text-align:left;">
+                        <b>${r.status === 'PENDING' ? '⏳ قيد التصحيح' : `${score} /${r.totalPossible}`}</b>
+                        ${r.status === 'GRADED' ? `<br><button class="btn btn-success" style="padding:4px 8px; font-size:12px; margin-top:5px;" onclick="viewStudentPaper('${r.firebaseKey}')">عرض الورقة والإجابات 📝</button>` : ''}
+                    </div>
                 </div>
             `;
+        });
+    }
+
+    // 🌟 دالة تمكين الطالب من رؤية ورقة إجاباته والحلول الصحيحة
+    function viewStudentPaper(key) {
+        const result = userResults.find(r => r.firebaseKey === key);
+        const exam = examsData.find(e => e.id === result.examId);
+        if(!result || !exam) return alert("تعذر تحميل ورقة الإجابات!");
+
+        showScreen('studentReviewModal');
+        document.getElementById('studentReviewTitle').innerText = `مراجعة إجابات: ${result.examTitle}`;
+
+        const body = document.getElementById('studentReviewBody');
+        body.innerHTML = "";
+
+        const labels = ['أ', 'ب', 'ج', 'د'];
+
+        exam.questions.forEach((q, idx) => {
+            const userAns = result.userAnswers[idx];
+            const div = document.createElement('div');
+            div.style.background = "#fdf8f8";
+            div.style.padding = "10px";
+            div.style.borderRadius = "8px";
+            div.style.marginBottom = "10px";
+            div.style.border = "1px solid #cbd5e1";
+
+            if (q.type === 'MCQ') {
+                const isCorrect = userAns === q.correct;
+                const userChoiceLabel = labels[userAns] !== undefined ? `(${labels[userAns]}) ${q.options[userAns]}` : 'لم تجب';
+                const correctChoiceLabel = `(${labels[q.correct]}) ${q.options[q.correct]}`;
+
+                div.innerHTML = `
+                    <p><strong>س${idx+1}: ${q.text}</strong> [${q.points} درجة]</p>
+                    <p style="font-size:13px; color:${isCorrect ? 'green' : 'red'}; margin:3px 0;">
+                        إجابتك: ${userChoiceLabel} ${isCorrect ? '✅' : '❌'}
+                    </p>
+                    ${!isCorrect ? `<p style="font-size:13px; color:green; margin:3px 0;"><b>الإجابة الصحيحة:</b> ${correctChoiceLabel}</p>` : ''}
+                `;
+            } else {
+                div.innerHTML = `
+                    <p><strong>س${idx+1} (مقالي): ${q.text}</strong> [${q.points} درجة]</p>
+                    <p style="background:white; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:13px;">
+                        إجابتك المكتوبة: ${userAns || 'لا توجد إجابة'}
+                    </p>
+                    ${q.modelAnswer ? `<p style="font-size:12px; color:#10b981; background:#ecfdf5; padding:5px; border-radius:4px;"><b>الإجابة النموذجية:</b> ${q.modelAnswer}</p>` : ''}
+                `;
+            }
+            body.appendChild(div);
         });
     }
 
@@ -837,13 +831,8 @@
         if(v === 'manageExams') renderManageExamsList();
     }
 
-    function goBackToResults() {
-        toggleTeacherView('viewResults');
-    }
-
-    function goToAddExamScreen() {
-        toggleTeacherView('addExam');
-    }
+    function goBackToResults() { toggleTeacherView('viewResults'); }
+    function goToAddExamScreen() { toggleTeacherView('addExam'); }
 
     function populateAttendanceExamDropdown() {
         const select = document.getElementById('attendanceExamSelect');
@@ -860,10 +849,7 @@
 
         document.getElementById('attendanceContainer').style.display = 'block';
 
-        const targetStudents = exam.grade === 'جميع الصفوف' 
-            ? allStudents 
-            : allStudents.filter(s => s.grade === exam.grade);
-
+        const targetStudents = exam.grade === 'جميع الصفوف' ? allStudents : allStudents.filter(s => s.grade === exam.grade);
         const attendedTable = document.getElementById('attendedStudentsTable');
         const absentTable = document.getElementById('absentStudentsTable');
         
