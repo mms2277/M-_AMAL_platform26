@@ -173,7 +173,7 @@
         .btn-secondary { background: linear-gradient(45deg, #475569, #64748b); }
 
         .exam-card { background: #fdf8f8; border: 1px solid #f3e5e5; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .timer { font-size: 16px; font-weight: bold; color: var(--accent); background: #fef2f2; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; border: 1px solid #fecaca; }
+        .timer { font-size: 15px; font-weight: bold; color: var(--accent); background: #fef2f2; padding: 8px 12px; border-radius: 8px; text-align: center; border: 1px solid #fecaca; }
 
         .option-btn { background: white; border: 2px solid #cbd5e1; text-align: right; margin: 8px 0; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-size: 14px; }
         .option-btn.selected { background: var(--secondary); color: white; border-color: var(--secondary); }
@@ -194,7 +194,22 @@
         .stat-card h4 { margin: 0; font-size: 20px; color: var(--secondary); }
         .stat-card p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; }
 
-        /* العلامة المائية الأمنية لحماية الامتحان */
+        /* تنسيق شريط التقدم */
+        .progress-bar-container {
+            width: 100%;
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #059669, #10b981);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
         .watermark-container {
             position: absolute;
             top: 0;
@@ -459,13 +474,18 @@
             <button class="btn btn-secondary" style="margin-top:15px;" onclick="switchTab('resultsTab')">العودة للنتائج ↩️</button>
         </div>
 
-        <!-- شاشة الامتحان -->
+        <!-- شاشة الامتحان (مع شريط التقدم الجديد) -->
         <div id="quizScreen" class="screen">
             <div class="watermark-container" id="watermarkBox"></div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span id="progressText" style="font-size: 13px; font-weight: bold; color: var(--primary);">0%</span>
-                <div class="timer" id="timerDisplay" style="margin-bottom:0; padding:6px 12px;">الوقت المتبقي: 00:00</div>
+                <span id="progressText" style="font-size: 13px; font-weight: bold; color: var(--primary);">تمت الإجابة على 0 من 0 أسئلة</span>
+                <div class="timer" id="timerDisplay">الوقت: 00:00</div>
+            </div>
+
+            <!-- شريط التقدم المرئي -->
+            <div class="progress-bar-container">
+                <div id="progressBarFill" class="progress-bar-fill"></div>
             </div>
 
             <h3 id="qTitle" style="margin-bottom: 15px;">السؤال...</h3>
@@ -502,9 +522,9 @@
     let timeLeftSeconds = 0;
     let qCounter = 0;
     let lastReviewSource = 'viewResults';
-    let tabSwitchCount = 0; // لعدد مرات كشف مغادرة شاشة الامتحان
+    let tabSwitchCount = 0;
 
-    // 🔒 1. تقنيات الأمان الحية: منع نسخ النصوص وقفل الاختصارات وحظر القائمة
+    // 🔒 1. حماية التحديد وقفل الاختصارات والقائمة
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('copy', e => e.preventDefault());
     document.addEventListener('cut', e => e.preventDefault());
@@ -518,29 +538,27 @@
         }
     });
 
-    // 🔒 2. تقنية الأمان: منع مغادرة تبويب الامتحان أو الخروج من التطبيق
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden && document.getElementById('quizScreen').classList.contains('active')) {
+    // 🔒 2. معالجة كشف محاولات الخروج من الامتحان للتنبيه المزدوج
+    function handleSecurityViolation() {
+        if (document.getElementById('quizScreen').classList.contains('active')) {
             tabSwitchCount++;
             if (tabSwitchCount === 1) {
-                alert("⚠️ تحذير أمني هام: يمنع مغادرة تبويب الامتحان أو تصغير الصفحة أو استخدام تطبيق آخر!");
+                alert("⚠️ تنبيه أمني تحذيري (المرة الأولى): يُمنع الخروج من صفحة الامتحان أو مغادرة التبويب! الخروج لمرة ثانية سيؤدي لتسليم الامتحان فوراً.");
             } else if (tabSwitchCount >= 2) {
-                alert("🚨 تم كشف خروجك من صفحة الامتحان لمرة ثانية! تم تسليم الامتحان تلقائياً بسبب محاولة الغش.");
+                alert("🚨 تنبيه حاسم (المرة الثانية): تم كشف مغادرتك لصفحة الامتحان مجدداً! جاري تسليم الورقة أوتوماتيكياً بسبب محاولة الغش.");
                 finishExam(true);
             }
+        }
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            handleSecurityViolation();
         }
     });
 
     window.addEventListener('blur', function() {
-        if (document.getElementById('quizScreen').classList.contains('active')) {
-            tabSwitchCount++;
-            if (tabSwitchCount === 1) {
-                alert("⚠️ تحذير أمني: يمنع فتح تطبيقات أخرى أو الخروج من نافذة الامتحان!");
-            } else if (tabSwitchCount >= 2) {
-                alert("🚨 تم كشف خروجك من الامتحان! تم تسليم الورقة تلقائياً.");
-                finishExam(true);
-            }
-        }
+        handleSecurityViolation();
     });
 
     async function apiFetch(endpoint, method = 'GET', data = null) {
@@ -721,13 +739,13 @@
         userAnswers = new Array(currentExam.questions.length).fill("");
         timeLeftSeconds = currentExam.duration * 60;
 
-        // 🔒 تفعيل العلامة المائية الشفافة المكررة لحماية الامتحان
         const watermarkBox = document.getElementById('watermarkBox');
         watermarkBox.innerHTML = Array(25).fill(`<span>🔒 ${currentUser.name} - ${currentUser.grade}</span>`).join('');
 
         showScreen('quizScreen');
         startTimer();
         renderQuestion();
+        updateProgressBar();
     }
 
     function startTimer() {
@@ -742,6 +760,16 @@
             }
             timeLeftSeconds--;
         }, 1000);
+    }
+
+    // تحديث شريط التقدم وعداد الأسئلة المجاب عنها
+    function updateProgressBar() {
+        const totalQ = currentExam.questions.length;
+        const answeredCount = userAnswers.filter(ans => ans !== "" && ans !== null && ans !== undefined).length;
+        const percent = Math.round((answeredCount / totalQ) * 100);
+
+        document.getElementById('progressBarFill').style.width = `${percent}%`;
+        document.getElementById('progressText').innerText = `تمت الإجابة على ${answeredCount} من ${totalQ} أسئلة (${percent}%)`;
     }
 
     function renderQuestion() {
@@ -759,7 +787,7 @@
                 container.innerHTML += `<button class="option-btn ${userAnswers[currentQIndex] === idx ? 'selected' : ''}" onclick="selectOpt(${idx})"><b>(${label})</b> ${opt}</button>`;
             });
         } else {
-            container.innerHTML = `<textarea rows="5" oninput="userAnswers[currentQIndex]=this.value" placeholder="اكتب إجابتك هنا...">${userAnswers[currentQIndex] || ''}</textarea>`;
+            container.innerHTML = `<textarea rows="5" oninput="saveEssayAnswer(this.value)" placeholder="اكتب إجابتك هنا...">${userAnswers[currentQIndex] || ''}</textarea>`;
         }
 
         document.getElementById('prevBtn').style.display = currentQIndex > 0 ? 'block' : 'none';
@@ -771,6 +799,7 @@
             nextBtn.innerText = "التالي ⬅️";
             nextBtn.onclick = () => { currentQIndex++; renderQuestion(); };
         }
+        updateProgressBar();
     }
 
     function selectOpt(idx) {
@@ -778,11 +807,26 @@
         renderQuestion();
     }
 
+    function saveEssayAnswer(val) {
+        userAnswers[currentQIndex] = val;
+        updateProgressBar();
+    }
+
     function prevQuestion() {
         if(currentQIndex > 0) { currentQIndex--; renderQuestion(); }
     }
 
     async function finishExam(force) {
+        // التحقق من وجود أسئلة غير مُجاب عليها قبل التسليم (في حال لم يكن تسليم قسري بالوقت أو الغش)
+        if (!force) {
+            const unanswered = userAnswers.filter(ans => ans === "" || ans === null || ans === undefined).length;
+            if (unanswered > 0) {
+                if (!confirm(`⚠️ تنبيه: لديك ${unanswered} أسئلة لم تقم بالإجابة عليها بعد!\nهل أنت متأكد من رغبتك في تسليم الامتحان الآن؟`)) {
+                    return;
+                }
+            }
+        }
+
         clearInterval(examTimer);
         document.getElementById('loadingOverlay').style.display = 'flex';
 
