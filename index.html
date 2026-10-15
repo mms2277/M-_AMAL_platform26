@@ -194,7 +194,6 @@
         .stat-card h4 { margin: 0; font-size: 20px; color: var(--secondary); }
         .stat-card p { margin: 5px 0 0 0; font-size: 12px; color: #64748b; }
 
-        /* تنسيق شريط التقدم */
         .progress-bar-container {
             width: 100%;
             background: #e2e8f0;
@@ -256,7 +255,7 @@
         <button id="teacherBtn" class="teacher-badge" onclick="openTeacherLogin()"><i class="fas fa-user-shield"></i> لوحة المعلم</button>
 
         <div class="header-brand-info">
-            <h1><i class="fas fa-laptop-code"></i> منصة ميس أمل 👩🏻‍💻</h1>
+            <br>  <h1><i class="fas fa-laptop-code"></i> منصة ميس أمل 👩🏻‍💻</h1>
             <p>المنصة التعليمية للبرمجة والذكاء الاصطناعي 💻🤖</p>
         </div>
     </header>
@@ -412,7 +411,7 @@
                 <div id="pendingList"></div>
             </div>
 
-            <!-- إدارة الامتحانات -->
+            <!-- إدارة الامتحانات (تم تحديثها لإظهار التفاصيل) -->
             <div id="teacherManageExamsSection" style="display: none;">
                 <h4 style="margin-bottom: 10px; color: var(--primary);">الامتحانات المنشورة حالياً:</h4>
                 <div id="manageExamsList"></div>
@@ -483,7 +482,6 @@
                 <div class="timer" id="timerDisplay">الوقت: 00:00</div>
             </div>
 
-            <!-- شريط التقدم المرئي -->
             <div class="progress-bar-container">
                 <div id="progressBarFill" class="progress-bar-fill"></div>
             </div>
@@ -524,9 +522,8 @@
     let lastReviewSource = 'viewResults';
     
     let tabSwitchCount = 0;
-    let lastViolationTime = 0; // لمنع احتساب الأحداث المزدوجة اللحظية
+    let lastViolationTime = 0;
 
-    // 🔒 1. حماية التحديد وقفل الاختصارات والقائمة
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('copy', e => e.preventDefault());
     document.addEventListener('cut', e => e.preventDefault());
@@ -540,12 +537,10 @@
         }
     });
 
-    // 🔒 2. خوارزمية كشف مغادرة شاشة الامتحان (مع مانع التكرار اللحظي)
     function handleSecurityViolation() {
         if (!document.getElementById('quizScreen').classList.contains('active')) return;
 
         const now = Date.now();
-        // إغلاق الثغرة: تجاهل أي حدث ثاني يحدث في أقل من ثانية ونصف من الحدث الأول
         if (now - lastViolationTime < 1500) return;
         lastViolationTime = now;
 
@@ -944,6 +939,7 @@
         document.getElementById('addExamForm').style.display = v === 'addExam' ? 'block' : 'none';
         document.getElementById('teacherResultsSection').style.display = v === 'viewResults' ? 'block' : 'none';
         document.getElementById('teacherPendingSection').style.display = v === 'viewPending' ? 'block' : 'none';
+        document.getElementById('teacherAttendanceSection').style.display = 'block'; // الحفاظ على التوافق
         document.getElementById('teacherAttendanceSection').style.display = v === 'trackAttendance' ? 'block' : 'none';
         document.getElementById('teacherManageExamsSection').style.display = v === 'manageExams' ? 'block' : 'none';
 
@@ -1260,11 +1256,29 @@
         });
     }
 
+    // [التعديل هنا]: إظهار الصف الدراسي، عدد الأسئلة، والمدة في زر إدارة الامتحانات لميس أمل
     function renderManageExamsList() {
         const c = document.getElementById('manageExamsList');
         c.innerHTML = "";
+        
+        if (examsData.length === 0) {
+            c.innerHTML = "<p style='text-align:center;'>لا توجد امتحانات منشورة حالياً.</p>";
+            return;
+        }
+
         examsData.forEach(e => {
-            c.innerHTML += `<div class="exam-card"><div><h4>${e.title}</h4></div><button class="btn btn-danger" onclick="deleteExam('${e.firebaseKey}')">حذف الامتحان</button></div>`;
+            const qCount = e.questions ? e.questions.length : 0;
+            c.innerHTML += `
+                <div class="exam-card">
+                    <div>
+                        <h4 style="color:var(--primary); margin:0 0 6px 0;">${e.title}</h4>
+                        <p style="font-size:13px; color:#64748b; margin:0;">
+                            <b>الصف:</b> ${e.grade} | <b>عدد الأسئلة:</b> ${qCount} أسئلة | <b>المدة:</b> ${e.duration} دقائق
+                        </p>
+                    </div>
+                    <button class="btn btn-danger" style="width:auto;" onclick="deleteExam('${e.firebaseKey}')">حذف الامتحان 🗑️</button>
+                </div>
+            `;
         });
     }
 
