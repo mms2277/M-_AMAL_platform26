@@ -171,6 +171,7 @@
         .btn-danger { background: linear-gradient(45deg, #dc2626, #ef4444); }
         .btn-warning { background: linear-gradient(45deg, #d97706, #f59e0b); }
         .btn-secondary { background: linear-gradient(45deg, #475569, #64748b); }
+        .btn-excel { background: linear-gradient(45deg, #1d6f42, #107c41); }
 
         .exam-card { background: #fdf8f8; border: 1px solid #f3e5e5; border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .timer { font-size: 15px; font-weight: bold; color: var(--accent); background: #fef2f2; padding: 8px 12px; border-radius: 8px; text-align: center; border: 1px solid #fecaca; }
@@ -341,8 +342,23 @@
                 <button type="submit" class="btn btn-success">نشر الامتحان فوراً 📢</button>
             </form>
 
-            <!-- جدول نتائج الطلاب -->
+            <!-- جدول نتائج الطلاب (تمت إضافة تصفية الصفوف وتصدير إكسل) -->
             <div id="teacherResultsSection" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                        <label><i class="fas fa-filter"></i> تصفية حسب الصف الدراسي:</label>
+                        <select id="filterGradeSelect" onchange="renderTeacherResultsTable()">
+                            <option value="ALL">جميع الصفوف</option>
+                            <option value="الأول الثانوي">الصف الأول الثانوي</option>
+                            <option value="الثاني الثانوي">الصف الثاني الثانوي</option>
+                            <option value="الثالث الثانوي">الصف الثالث الثانوي</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-excel" style="width: auto; padding: 10px 16px; margin-top: 20px;" onclick="exportResultsToExcel()">
+                        <i class="fas fa-file-excel"></i> تصدير إلى Excel
+                    </button>
+                </div>
+
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -539,6 +555,7 @@
 
     function handleSecurityViolation() {
         if (!document.getElementById('quizScreen').classList.contains('active')) return;
+        if (!document.hidden) return;
 
         const now = Date.now();
         if (now - lastViolationTime < 1500) return;
@@ -558,10 +575,6 @@
         if (document.hidden) {
             handleSecurityViolation();
         }
-    });
-
-    window.addEventListener('blur', function() {
-        handleSecurityViolation();
     });
 
     async function apiFetch(endpoint, method = 'GET', data = null) {
@@ -766,7 +779,6 @@
         }, 1000);
     }
 
-    /* [تحديث دقيق لشريط التقدم لملاحظة النصوص الحقيقية فقط] */
     function updateProgressBar() {
         const totalQ = currentExam.questions.length;
         const answeredCount = userAnswers.filter(ans => ans !== "" && ans !== null && ans !== undefined && String(ans).trim().length > 0).length;
@@ -813,14 +825,13 @@
 
     function saveEssayAnswer(val) {
         userAnswers[currentQIndex] = val;
-        updateProgressBar(); // تحديث فوري لشريط التقدم عند الكتابة أو المسح
+        updateProgressBar();
     }
 
     function prevQuestion() {
         if(currentQIndex > 0) { currentQIndex--; renderQuestion(); }
     }
 
-    /* [منع التسليم إذا كانت الإجابة المقالية فارغة أو تم مسحها] */
     async function finishExam(force) {
         if (!force) {
             const unanswered = userAnswers.filter(ans => ans === "" || ans === null || ans === undefined || String(ans).trim().length === 0).length;
@@ -1090,10 +1101,25 @@
         toggleTeacherView('viewResults');
     }
 
+    /* [دالة عرض جدول نتائج الطلاب المحدثة للفلترة حسب الصف] */
     function renderTeacherResultsTable() {
         const tbody = document.getElementById('studentsResultsTable');
+        if (!tbody) return;
+
         tbody.innerHTML = "";
-        userResults.forEach(r => {
+        const selectedGrade = document.getElementById('filterGradeSelect').value;
+
+        let filtered = userResults;
+        if (selectedGrade !== 'ALL') {
+            filtered = userResults.filter(r => r.studentGrade === selectedGrade);
+        }
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='6'>لا توجد نتائج مسجلة لهذا الصف حالياً.</td></tr>";
+            return;
+        }
+
+        filtered.forEach(r => {
             const score = r.autoScore + (r.essayScore || 0);
             tbody.innerHTML += `
                 <tr>
@@ -1109,6 +1135,38 @@
                 </tr>
             `;
         });
+    }
+
+    /* [دالة تصدير نتائج الصف المحدد إلى ملف Excel] */
+    function exportResultsToExcel() {
+        const selectedGrade = document.getElementById('filterGradeSelect').value;
+        let filtered = userResults;
+        if (selectedGrade !== 'ALL') {
+            filtered = userResults.filter(r => r.studentGrade === selectedGrade);
+        }
+
+        if (filtered.length === 0) {
+            alert("لا توجد نتائج لتصديرها لهذا الصف!");
+            return;
+        }
+
+        const excelData = filtered.map(r => {
+            const score = r.status === 'PENDING' ? 'قيد التصحيح' : (r.autoScore + (r.essayScore || 0)) + " / " + r.totalPossible;
+            return {
+                "اسم الطالب": r.studentName,
+                "الصف الدراسي": r.studentGrade,
+                "عنوان الامتحان": r.examTitle,
+                "الدرجة": score,
+                "تاريخ ووقت التسليم": r.submittedAt
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "النتائج");
+
+        const fileName = "نتائج_الطلاب_" + (selectedGrade === 'ALL' ? 'جميع_الصفوف' : selectedGrade) + "_" + Date.now() + ".xlsx";
+        XLSX.writeFile(workbook, fileName);
     }
 
     function teacherGradePaper(key, source = 'viewPending') {
