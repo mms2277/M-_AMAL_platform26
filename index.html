@@ -411,7 +411,7 @@
                 <div id="pendingList"></div>
             </div>
 
-            <!-- إدارة الامتحانات (تم تحديثها لإظهار التفاصيل) -->
+            <!-- إدارة الامتحانات -->
             <div id="teacherManageExamsSection" style="display: none;">
                 <h4 style="margin-bottom: 10px; color: var(--primary);">الامتحانات المنشورة حالياً:</h4>
                 <div id="manageExamsList"></div>
@@ -766,9 +766,10 @@
         }, 1000);
     }
 
+    /* [تحديث دقيق لشريط التقدم لملاحظة النصوص الحقيقية فقط] */
     function updateProgressBar() {
         const totalQ = currentExam.questions.length;
-        const answeredCount = userAnswers.filter(ans => ans !== "" && ans !== null && ans !== undefined).length;
+        const answeredCount = userAnswers.filter(ans => ans !== "" && ans !== null && ans !== undefined && String(ans).trim().length > 0).length;
         const percent = Math.round((answeredCount / totalQ) * 100);
 
         document.getElementById('progressBarFill').style.width = `${percent}%`;
@@ -812,20 +813,20 @@
 
     function saveEssayAnswer(val) {
         userAnswers[currentQIndex] = val;
-        updateProgressBar();
+        updateProgressBar(); // تحديث فوري لشريط التقدم عند الكتابة أو المسح
     }
 
     function prevQuestion() {
         if(currentQIndex > 0) { currentQIndex--; renderQuestion(); }
     }
 
+    /* [منع التسليم إذا كانت الإجابة المقالية فارغة أو تم مسحها] */
     async function finishExam(force) {
         if (!force) {
-            const unanswered = userAnswers.filter(ans => ans === "" || ans === null || ans === undefined).length;
+            const unanswered = userAnswers.filter(ans => ans === "" || ans === null || ans === undefined || String(ans).trim().length === 0).length;
             if (unanswered > 0) {
-                if (!confirm(`⚠️ تنبيه: لديك ${unanswered} أسئلة لم تقم بالإجابة عليها بعد!\nهل أنت متأكد من رغبتك في تسليم الامتحان الآن؟`)) {
-                    return;
-                }
+                alert(`⚠️ تنبيه: لديك (${unanswered}) سؤال لم تقم بالإجابة عليه بعد!\nرجاءً قم بحل جميع الأسئلة أولاً قبل التسليم.`);
+                return;
             }
         }
 
@@ -939,7 +940,6 @@
         document.getElementById('addExamForm').style.display = v === 'addExam' ? 'block' : 'none';
         document.getElementById('teacherResultsSection').style.display = v === 'viewResults' ? 'block' : 'none';
         document.getElementById('teacherPendingSection').style.display = v === 'viewPending' ? 'block' : 'none';
-        document.getElementById('teacherAttendanceSection').style.display = 'block'; // الحفاظ على التوافق
         document.getElementById('teacherAttendanceSection').style.display = v === 'trackAttendance' ? 'block' : 'none';
         document.getElementById('teacherManageExamsSection').style.display = v === 'manageExams' ? 'block' : 'none';
 
@@ -1256,7 +1256,6 @@
         });
     }
 
-    // [التعديل هنا]: إظهار الصف الدراسي، عدد الأسئلة، والمدة في زر إدارة الامتحانات لميس أمل
     function renderManageExamsList() {
         const c = document.getElementById('manageExamsList');
         c.innerHTML = "";
